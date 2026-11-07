@@ -1,10 +1,10 @@
-# [Project Name]
+# Daily Frame
 
-> **One-line pitch:** [Who is this for, and what job does it do for them?]
+> **One-line pitch:** For anyone tired of performing their life on social media: take one photo a day, write one honest reflection, and keep it just for yourself.
 
-- **Builder:** [Your Name] (`@github-handle`)
+- **Builder:** Michelle (`@mt6254`)
 - **Pod:** [Pod Name / Number]
-- **Product Page & Living PRD:** [Add your GitHub Pages URL]
+- **Product Page & Living PRD:** https://building-with-ai-f26.github.io/mt6254-daily-frame/
 - **App:** runs locally through Week 4; add a cloud URL in Build 5.
 
 ## Start here: Build 1
@@ -26,6 +26,7 @@ Create your PostHog account in Week 1. Install it on the Product Page and local 
 | File / folder | Purpose |
 | --- | --- |
 | [`docs/index.html`](./docs/index.html) | Required public pitch, living PRD, and weekly build log. Update with actual work and evidence. |
+| [`app/`](./app/) | The Daily Frame prototype (plain HTML, CSS, and JavaScript; data stored in the browser with IndexedDB). |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting aids. No duplicate submission is required. |
 | [`AGENTS.md`](./AGENTS.md) | Local run commands, project context, and agent rules. Build 2 onward. |
 | [`tests/`](./tests/) | Verification guidance. Build 4 offers Track A domain evals **or** Track B user replays. |
@@ -35,11 +36,14 @@ Create your PostHog account in Week 1. Install it on the Product Page and local 
 
 ## Local setup
 
-Clone **your own repository** and ask your coding agent to document the exact install and run commands here and in `AGENTS.md`.
+No installs, accounts, or API keys needed. You only need Python 3 (preinstalled on macOS) and a browser.
 
 ```bash
-git clone https://github.com/building-with-ai-f26/<your-repo-name>.git
-cd <your-repo-name>
+git clone https://github.com/building-with-ai-f26/mt6254-daily-frame.git
+cd mt6254-daily-frame/app
+python3 -m http.server 8000
 ```
+
+Then open http://localhost:8000. Tap a day, add a photo, and write a reflection. Everything saves automatically in your browser on this computer; nothing is uploaded.
 
 If your app needs API keys, use a local environment file such as `.env`. Keep private keys out of source code, browser code, screenshots, and commits. The template ignores `.env`; `.env.example` contains placeholders only.
