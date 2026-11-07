@@ -39,9 +39,53 @@ const fromKey = (k) => { const [y, m, d] = k.split('-').map(Number); return new 
 const todayKey = () => key(new Date());
 const isFuture = (k) => k > todayKey();
 
+// ---------- image decoding (JPG, PNG, WebP, AVIF, GIF, BMP natively; HEIC/HEIF via vendor/heic-to.js) ----------
+async function looksLikeHeic(file) {
+  if (/image\/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name || '')) return true;
+  // Some systems hand over HEIC files with no type, so check the file header too.
+  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const box = String.fromCharCode(...head.slice(4, 12));
+  return /^ftyp(heic|heix|hevc|hevx|heim|heis|mif1|msf1)/.test(box);
+}
+
+let heicLib = null;
+function loadHeicLib() {
+  if (!heicLib) {
+    heicLib = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'vendor/heic-to.js';
+      s.onload = () => resolve(window.HeicTo);
+      s.onerror = () => reject(new Error('Could not load the HEIC converter'));
+      document.head.appendChild(s);
+    });
+  }
+  return heicLib;
+}
+
+function decodeWithImgTag(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('unsupported')); };
+    img.src = url;
+  });
+}
+
+async function decodeImage(file) {
+  if (await looksLikeHeic(file)) {
+    // Safari can open HEIC by itself; other browsers need the converter.
+    try { return await createImageBitmap(file); } catch (_) {}
+    const heicTo = await loadHeicLib();
+    return heicTo({ blob: file, type: 'bitmap' });
+  }
+  try { return await createImageBitmap(file); } catch (_) {}
+  return decodeWithImgTag(file); // fallback for formats only <img> understands
+}
+
 // ---------- image resize (keeps storage small) ----------
 async function resizeImage(file, maxSide = 1600) {
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await decodeImage(file);
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * scale);
@@ -82,6 +126,7 @@ async function renderCalendar() {
     const e = byDate[k];
     const cell = document.createElement('button');
     cell.className = 'cell';
+    cell.style.setProperty('--day-mix', MIX[(d - 1) % MIX.length]);
     cell.setAttribute('aria-label', fromKey(k).toDateString());
     if (k === todayKey()) cell.classList.add('today');
     if (isFuture(k)) { cell.classList.add('future'); cell.disabled = true; }
@@ -113,7 +158,7 @@ async function openDay(k) {
   $('day-view').hidden = false;
   $('day-label').textContent = fromKey(k).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   $('next-day').disabled = k >= todayKey();
-  $('save-status').textContent = '';
+  setStatus('');
   const e = await getEntry(k);
   showPhoto(e?.photo || null);
   $('reflection').value = e?.reflection || '';
@@ -139,22 +184,39 @@ async function save(patch) {
   const entry = { ...existing, ...patch, updatedAt: Date.now() };
   if (!entry.photo && !entry.reflection.trim()) await deleteEntry(k);
   else await putEntry(entry);
-  $('save-status').textContent = 'Saved on this device';
+  setStatus('Saved on this device');
 }
 
-async function onPhotoChosen(ev) {
+function setStatus(text, isError = false) {
+  $('save-status').textContent = text;
+  $('save-status').classList.toggle('error', isError);
+}
+
+async function usePhoto(file) {
+  if (!file) return;
+  const day = currentDay;
+  setStatus((await looksLikeHeic(file)) ? 'Converting HEIC photo…' : 'Saving photo…');
+  try {
+    const blob = await resizeImage(file);
+    if (day !== currentDay) return;
+    showPhoto(blob);
+    await save({ photo: blob });
+  } catch (err) {
+    console.error(err);
+    const ext = (file.name.split('.').pop() || 'this').toUpperCase();
+    setStatus(`Couldn't open that ${ext} file in this browser. Try JPG, PNG, HEIC, WebP, AVIF, GIF or BMP.`, true);
+  }
+}
+
+function onPhotoChosen(ev) {
   const file = ev.target.files[0];
   ev.target.value = '';
-  if (!file) return;
-  $('save-status').textContent = 'Saving photo…';
-  const blob = await resizeImage(file);
-  showPhoto(blob);
-  await save({ photo: blob });
+  usePhoto(file);
 }
 
 let typingTimer;
 function onReflectionInput() {
-  $('save-status').textContent = 'Writing…';
+  setStatus('Writing…');
   clearTimeout(typingTimer);
   typingTimer = setTimeout(() => save({ reflection: $('reflection').value }), 500);
 }
@@ -177,6 +239,46 @@ async function backToCalendar() {
   renderCalendar();
 }
 
+// ---------- theme ----------
+const MIX = ['var(--pink)', 'var(--orchid)', 'var(--lavender)', 'var(--blue)', 'var(--sky)'];
+const ACCENT_NAMES = { pink: 'Pink', orchid: 'Orchid', lavender: 'Lavender', blue: 'Cornflower', sky: 'Sky', mix: 'All five (each day gets its own color)' };
+const root = document.documentElement;
+
+function store(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+
+function applyTheme() {
+  document.querySelectorAll('#mode-options button').forEach((b) => b.classList.toggle('active', b.dataset.mode === root.dataset.mode));
+  document.querySelectorAll('#accent-options button').forEach((b) => b.classList.toggle('active', b.dataset.accent === root.dataset.accent));
+  $('accent-name').textContent = ACCENT_NAMES[root.dataset.accent] || '';
+}
+$('mode-options').onclick = (e) => {
+  const m = e.target.dataset.mode; if (!m) return;
+  root.dataset.mode = m; store('df-mode', m); applyTheme();
+};
+$('accent-options').onclick = (e) => {
+  const a = e.target.dataset.accent; if (!a) return;
+  root.dataset.accent = a; store('df-accent', a); applyTheme();
+};
+$('theme-btn').onclick = (e) => {
+  e.stopPropagation();
+  const open = $('theme-panel').hidden;
+  $('theme-panel').hidden = !open;
+  $('theme-btn').setAttribute('aria-expanded', String(open));
+};
+document.addEventListener('click', (e) => {
+  if (!$('theme-panel').hidden && !e.target.closest('.theme-wrap')) {
+    $('theme-panel').hidden = true; $('theme-btn').setAttribute('aria-expanded', 'false');
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('theme-panel').hidden = true; });
+applyTheme();
+
+// ---------- drag and drop a photo onto the day view ----------
+const wrap = $('photo-wrap');
+['dragenter', 'dragover'].forEach((t) => wrap.addEventListener(t, (e) => { e.preventDefault(); wrap.classList.add('dragging'); }));
+['dragleave', 'drop'].forEach((t) => wrap.addEventListener(t, (e) => { e.preventDefault(); wrap.classList.remove('dragging'); }));
+wrap.addEventListener('drop', (e) => usePhoto(e.dataTransfer.files[0]));
+
 // ---------- wire up ----------
 $('prev-month').onclick = () => shiftMonth(-1);
 $('next-month').onclick = () => shiftMonth(1);
@@ -191,7 +293,7 @@ $('delete-btn').onclick = async () => {
   if (!confirm('Delete this day\'s photo and reflection?')) return;
   await deleteEntry(currentDay);
   showPhoto(null); $('reflection').value = '';
-  $('save-status').textContent = 'Deleted';
+  setStatus('Deleted');
 };
 
 const now = new Date();

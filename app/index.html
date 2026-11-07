@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Daily Frame</title>
 <link rel="stylesheet" href="style.css" />
+<script>
+  // Apply saved theme before first paint so there is no flash.
+  try {
+    document.documentElement.dataset.mode = localStorage.getItem('df-mode') || 'system';
+    document.documentElement.dataset.accent = localStorage.getItem('df-accent') || 'lavender';
+  } catch (e) {}
+</script>
 </head>
 <body>
 <main class="shell">
@@ -17,6 +24,29 @@
         <h1 id="month-label">Month</h1>
       </div>
       <div class="nav">
+        <div class="theme-wrap">
+          <button id="theme-btn" class="text-btn theme-btn" aria-haspopup="true" aria-expanded="false">
+            <span class="swatch-dot"></span>Theme
+          </button>
+          <div id="theme-panel" class="theme-panel" hidden>
+            <p class="panel-label">Mode</p>
+            <div class="segmented" id="mode-options">
+              <button data-mode="light">Light</button>
+              <button data-mode="dark">Dark</button>
+              <button data-mode="system">Auto</button>
+            </div>
+            <p class="panel-label">Accent</p>
+            <div class="swatches" id="accent-options">
+              <button data-accent="pink" title="Pink" style="--c:#FF499E"></button>
+              <button data-accent="orchid" title="Orchid" style="--c:#D264B6"></button>
+              <button data-accent="lavender" title="Lavender" style="--c:#A480CF"></button>
+              <button data-accent="blue" title="Cornflower" style="--c:#779BE7"></button>
+              <button data-accent="sky" title="Sky" style="--c:#49B6FF"></button>
+              <button data-accent="mix" title="All five" class="mix"></button>
+            </div>
+            <p id="accent-name" class="panel-hint"></p>
+          </div>
+        </div>
         <button id="prev-month" class="icon-btn" aria-label="Previous month">&#8249;</button>
         <button id="today-btn" class="text-btn">Today</button>
         <button id="next-month" class="icon-btn" aria-label="Next month">&#8250;</button>
@@ -50,14 +80,15 @@
       <label id="photo-empty" class="photo-empty">
         <span class="plus">+</span>
         <span>Add a photo for this day</span>
-        <span class="hint">Any photo. It does not have to be a good one.</span>
-        <input id="photo-input" type="file" accept="image/*" capture="environment" />
+        <span class="hint">Click to choose, or drag a photo here. Any photo. It does not have to be a good one.</span>
+        <span class="hint formats">JPG · PNG · HEIC/HEIF (iPhone) · WebP · AVIF · GIF · BMP</span>
+        <input id="photo-input" type="file" accept="image/*,.heic,.heif,.avif,.webp,.jpg,.jpeg,.png,.gif,.bmp" />
       </label>
     </div>
 
     <div class="photo-actions" id="photo-actions" hidden>
       <label class="text-btn">Replace photo
-        <input id="replace-input" type="file" accept="image/*" />
+        <input id="replace-input" type="file" accept="image/*,.heic,.heif,.avif,.webp,.jpg,.jpeg,.png,.gif,.bmp" />
       </label>
       <button id="delete-btn" class="text-btn danger">Delete day</button>
     </div>
