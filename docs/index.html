@@ -242,7 +242,7 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 <ul>
 <li><strong>What shipped:</strong> A rough local web app in <code>app/</code>. Month calendar with a thumbnail on each day that has a photo, a day view to add or replace a photo and write a reflection, autosave, day-to-day navigation, and delete. Future days are locked. Photos are resized to 1600px and saved in the browser (IndexedDB), so nothing leaves the device. Screenshots are above.</li>
 <li><strong>Things learned with AI:</strong> Used an AI agent to turn my idea into a PRD and a working prototype in one sitting. Learned that a browser can store photos locally with IndexedDB without any server or account, and that phone photos are large (several MB), so resizing before saving matters. Terminus Episodes 1 and 2: notes to add.</li>
-<li><strong>What broke / changed in PRD:</strong> Because data lives in one browser, entries do not sync between my phone and laptop yet, and taking photos with the phone camera will need the app hosted (Build 5). No PRD changes yet; this is v1.</li>
+<li><strong>What broke / changed in PRD:</strong> My iPhone photos (HEIC) would not upload, because Chrome cannot open HEIC by itself. Fixed by adding a small in-browser HEIC converter, and the app now also takes PNG, WebP, AVIF, GIF and BMP, plus drag and drop. Added light (creme) and dark (grey) modes with five accent colors so the app feels like mine. Because data lives in one browser, entries do not sync between my phone and laptop yet. No PRD scope changes; this is v1.</li>
 <li><strong>Cost & time this week:</strong> $0.00 · ~1 hour</li>
 </ul>
 </div>
