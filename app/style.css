@@ -1,0 +1,85 @@
+:root {
+  --bg: #f6f1ea;
+  --card: #fffdf9;
+  --ink: #2a2420;
+  --muted: #7a6e64;
+  --line: #e6ddd2;
+  --accent: #b5603c;
+  --accent-soft: #f3e2d7;
+  --empty: #efe8df;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+.shell { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 8px; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; margin: 4px 0 0; }
+h1 { font-size: 34px; }
+h2 { font-size: 26px; margin: 12px 0 16px; }
+.summary { color: var(--muted); margin: 4px 0 20px; font-size: 14px; }
+
+.nav { display: flex; gap: 6px; align-items: center; }
+button { font: inherit; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); font-size: 20px; cursor: pointer; line-height: 1;
+}
+.icon-btn:disabled { opacity: .35; cursor: default; }
+.text-btn {
+  background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+  color: var(--ink); cursor: pointer; font-size: 14px; position: relative; overflow: hidden;
+}
+.text-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.danger { color: #a33a2a; }
+
+.weekdays, .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.weekdays span { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-bottom: 4px; }
+.cell {
+  aspect-ratio: 1 / 1; border-radius: 10px; background: var(--empty); border: none; padding: 0;
+  position: relative; overflow: hidden; cursor: pointer; color: var(--muted);
+}
+.cell.blank { background: transparent; cursor: default; }
+.cell.future { opacity: .45; cursor: default; }
+.cell.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cell .num {
+  position: absolute; top: 5px; left: 7px; font-size: 12px; font-weight: 600;
+}
+.cell.has-photo .num { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.cell .dot { position: absolute; bottom: 6px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.cell.has-photo .dot { background: #fff; }
+.cell:not(.blank):not(.future):hover { filter: brightness(.96); }
+
+.footnote { text-align: center; color: var(--muted); font-size: 13px; margin-top: 24px; }
+
+.photo-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+#photo { width: 100%; max-height: 70vh; object-fit: contain; display: block; background: #1d1916; }
+.photo-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 280px; cursor: pointer; position: relative; color: var(--ink); text-align: center; padding: 24px;
+}
+.photo-empty input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo-empty .plus { font-size: 40px; color: var(--accent); line-height: 1; }
+.photo-empty .hint { font-size: 13px; color: var(--muted); }
+.photo-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+.reflection-label { display: block; margin: 24px 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+  padding: 14px 16px; font: 17px/1.6 Georgia, "Times New Roman", serif; color: var(--ink); resize: vertical;
+}
+textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.save-status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 6px 2px; }
+
+@media (max-width: 480px) {
+  h1 { font-size: 26px; }
+  .weekdays, .grid { gap: 4px; }
+  .cell { border-radius: 7px; }
+  .cell .num { font-size: 10px; top: 3px; left: 5px; }
+}
