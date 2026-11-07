@@ -202,7 +202,8 @@ code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-si
 .stat-box:nth-child(2) { border-top: 3px solid var(--lavender); }
 .stat-box:nth-child(3) { border-top: 3px solid var(--blue); }
 .stat-box:nth-child(4) { border-top: 3px solid var(--sky); }
-.shot-col { display: grid; gap: 16px; align-content: start; }
+.shots-pair { grid-template-columns: 1.85fr 1fr; align-items: start; }
+@media (max-width: 600px) { .shots-pair { grid-template-columns: 1fr; } }
 .shot-wide { margin: 16px 0 8px; }
 .shot-wide img { width: 100%; border: 1px solid var(--border); border-radius: 10px; display: block; }
 .shot-wide figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
@@ -236,20 +237,14 @@ section { padding: 20px 18px; }
 <strong>Current Status:</strong> Build 1: rough local prototype<br />
 <strong>Demo:</strong> Screenshots of the prototype running locally below. Cloud app URL comes in Build 5.
 </p>
-<div class="shots">
-<div class="shot-col">
+<div class="shots shots-pair">
 <figure>
-<img src="calendar.png" alt="Daily Frame calendar in light creme mode with a pink accent, showing a photo thumbnail on each day that has an entry" />
-<figcaption>Calendar (light mode, pink accent): one photo per day. A dot means there is a written reflection.</figcaption>
+<a href="app-themes.png"><img src="app-themes.png" alt="Daily Frame calendar in dark mode with the theme picker open, showing Light, Dark and Auto modes and six accent swatches" /></a>
+<figcaption>Calendar (dark mode) with the theme picker: light, dark or auto, plus five accent colors or "all five", where each day gets its own color.</figcaption>
 </figure>
 <figure>
-<img src="themes.png" alt="Daily Frame theme picker in dark mode with Light, Dark and Auto modes and six accent swatches" />
-<figcaption>Theme picker: light, dark or auto mode, plus five accent colors or "all five", where each day gets its own color.</figcaption>
-</figure>
-</div>
-<figure>
-<img src="day.png" alt="Daily Frame day view in dark mode showing the full photo with a reflection text box underneath" />
-<figcaption>Day view (dark mode): the full photo and the reflection, saved automatically.</figcaption>
+<a href="app-day.png"><img src="app-day.png" alt="Daily Frame day view in light creme mode showing the full photo with a reflection underneath" /></a>
+<figcaption>Day view (light mode): the full photo and the reflection, saved automatically.</figcaption>
 </figure>
 </div>
 <p class="meta">Screenshots use placeholder images and sample entries. To run it yourself: clone the repo, then <code>cd app</code> and <code>python3 -m http.server 8000</code>, and open <code>http://localhost:8000</code>.</p>
