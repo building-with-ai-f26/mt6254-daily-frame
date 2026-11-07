@@ -10,15 +10,38 @@ Build 2: paste your project's current PostHog web snippet here,
 then install analytics in the local app and verify events. -->
 
 <style>
+/* Matches the Daily Frame app: creme light mode, dark grey dark mode,
+   palette https://coolors.co/ff499e-d264b6-a480cf-779be7-49b6ff */
 :root {
---bg: #fafafa;
---card: #ffffff;
---text: #111827;
---muted: #4b5563;
---border: #e5e7eb;
---accent: #b5603c;
---tag-bg: #f8ece5;
---tag-text: #8a3f22;
+--pink: #FF499E;
+--orchid: #D264B6;
+--lavender: #A480CF;
+--blue: #779BE7;
+--sky: #49B6FF;
+--rainbow: linear-gradient(90deg, var(--pink), var(--orchid), var(--lavender), var(--blue), var(--sky));
+--bg: #f8f2e7;
+--card: #fffbf4;
+--text: #2b2622;
+--muted: #7b7166;
+--border: #e9dfcf;
+--accent: var(--pink);
+--tag-bg: #f0e7d8;
+--code-bg: #f0e7d8;
+--btn-text: #fff;
+color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+:root {
+--bg: #1e1e21;
+--card: #29292d;
+--text: #f2eff1;
+--muted: #a39ea6;
+--border: #3a3a40;
+--tag-bg: #2b2b30;
+--code-bg: #34343a;
+--btn-text: #1e1e21;
+color-scheme: dark;
+}
 }
 * { box-sizing: border-box; }
 body {
@@ -34,27 +57,48 @@ margin: 0 auto;
 padding: 48px 24px 80px;
 }
 header {
-border-bottom: 1px solid var(--border);
 padding-bottom: 28px;
-margin-bottom: 32px;
 }
 .eyebrow {
 display: inline-block;
 font-size: 12px;
-font-weight: 600;
+font-weight: 700;
 text-transform: uppercase;
-letter-spacing: 0.06em;
+letter-spacing: 0.1em;
 background: var(--tag-bg);
-color: var(--tag-text);
+color: var(--muted);
 padding: 4px 10px;
 border-radius: 999px;
-margin-bottom: 12px;
+margin-bottom: 14px;
+}
+.brand {
+display: block;
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.14em;
+text-transform: uppercase;
+background: var(--rainbow);
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+width: fit-content;
+margin-bottom: 4px;
+}
+h1, h2 {
+font-family: Georgia, "Times New Roman", serif;
+font-weight: 400;
 }
 h1 {
-font-size: 36px;
-line-height: 1.15;
+font-size: 44px;
+line-height: 1.1;
 margin: 0 0 12px;
-letter-spacing: -0.02em;
+letter-spacing: -0.01em;
+}
+.rainbow-bar {
+height: 4px;
+border-radius: 999px;
+background: var(--rainbow);
+margin-bottom: 28px;
 }
 .tagline {
 font-size: 19px;
@@ -74,7 +118,8 @@ font-weight: 600;
 font-size: 15px;
 text-decoration: none;
 background: var(--accent);
-color: #fff;
+color: var(--btn-text);
+font-weight: 700;
 }
 .btn-secondary {
 background: var(--card);
@@ -89,18 +134,19 @@ padding: 24px 28px;
 margin-bottom: 24px;
 }
 h2 {
-font-size: 20px;
+font-size: 26px;
 margin: 0 0 14px;
-letter-spacing: -0.01em;
 }
 h3 {
 font-size: 16px;
-margin: 18px 0 6px;
+margin: 20px 0 6px;
 }
 p, ul {
 margin: 0 0 12px;
-color: #1f2937;
+color: var(--text);
 }
+a { color: var(--accent); }
+li::marker { color: var(--accent); }
 .grid-2 {
 display: grid;
 grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -151,7 +197,19 @@ border-radius: 10px;
 display: block;
 }
 .shots figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
-code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14px; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 14px; }
+.stat-box:nth-child(1) { border-top: 3px solid var(--pink); }
+.stat-box:nth-child(2) { border-top: 3px solid var(--lavender); }
+.stat-box:nth-child(3) { border-top: 3px solid var(--blue); }
+.stat-box:nth-child(4) { border-top: 3px solid var(--sky); }
+.shot-col { display: grid; gap: 16px; align-content: start; }
+.shot-wide { margin: 16px 0 8px; }
+.shot-wide img { width: 100%; border: 1px solid var(--border); border-radius: 10px; display: block; }
+.shot-wide figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+@media (max-width: 480px) {
+h1 { font-size: 34px; }
+section { padding: 20px 18px; }
+}
 </style>
 </head>
 <body>
@@ -159,7 +217,8 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 <!-- HERO / PRODUCT PITCH -->
 <header>
 <span class="eyebrow">NYU Stern · Building with AI · Fall 2026</span>
-<h1>Daily Frame</h1>
+<span class="brand">Daily Frame</span>
+<h1>One photo. One honest reflection. Just for you.</h1>
 <p class="tagline">For anyone tired of performing their life on social media: take one photo a day, write one honest reflection, and keep it just for yourself.</p>
 <p class="meta">Builder: Michelle (@mt6254)</p>
 <div class="cta-row">
@@ -168,6 +227,7 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 <a class="btn btn-secondary" href="#build-log">Weekly Build Log</a>
 </div>
 </header>
+<div class="rainbow-bar"></div>
 
 <!-- DEMO / SCREENSHOT / VIDEO SHOWCASE -->
 <section id="live-demo">
@@ -177,13 +237,19 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 <strong>Demo:</strong> Screenshots of the prototype running locally below. Cloud app URL comes in Build 5.
 </p>
 <div class="shots">
+<div class="shot-col">
 <figure>
-<img src="calendar.png" alt="Daily Frame calendar view showing a month with a photo thumbnail on each day that has an entry" />
-<figcaption>Calendar: one photo per day. A dot means there is a written reflection.</figcaption>
+<img src="calendar.png" alt="Daily Frame calendar in light creme mode with a pink accent, showing a photo thumbnail on each day that has an entry" />
+<figcaption>Calendar (light mode, pink accent): one photo per day. A dot means there is a written reflection.</figcaption>
 </figure>
 <figure>
-<img src="day.png" alt="Daily Frame day view showing the full photo with a reflection text box underneath" />
-<figcaption>Day view: the full photo and the reflection, saved automatically.</figcaption>
+<img src="themes.png" alt="Daily Frame theme picker in dark mode with Light, Dark and Auto modes and six accent swatches" />
+<figcaption>Theme picker: light, dark or auto mode, plus five accent colors or "all five", where each day gets its own color.</figcaption>
+</figure>
+</div>
+<figure>
+<img src="day.png" alt="Daily Frame day view in dark mode showing the full photo with a reflection text box underneath" />
+<figcaption>Day view (dark mode): the full photo and the reflection, saved automatically.</figcaption>
 </figure>
 </div>
 <p class="meta">Screenshots use placeholder images and sample entries. To run it yourself: clone the repo, then <code>cd app</code> and <code>python3 -m http.server 8000</code>, and open <code>http://localhost:8000</code>.</p>
@@ -196,8 +262,8 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 
 <h3>1. Target User & The Job to Be Done</h3>
 <p><strong>Who is this for?</strong> Me first, then classmates in my program who already use Instagram but feel pressure to post a "perfect" photo and caption. I can reach both every week.</p>
-<p><strong>The painful "Before" workflow:</strong> I take photos all day and they sink into a camera roll of thousands of images. The few I share go through a loop of choosing the best shot, editing it, rewriting the caption, posting, and then checking for likes. The photo ends up being for an audience, and I almost never write down how the day actually felt. When I want to look back at a month, there is no single place that shows it.</p>
-<p><strong>The "After" workflow with this product:</strong> Once a day I open Daily Frame, tap today, add any photo (it does not need to be good), and write a few honest lines. It saves automatically and takes about a minute. The month view becomes a private visual diary I can scroll back through, with no likes, followers, or comments.</p>
+<p><strong>The painful "Before" workflow:</strong> I take photos all day and they sink into a camera roll of thousands of images. The few I share go through a loop of choosing the best shot, editing it, rewriting the caption, posting, and then checking for likes. The photo ends up being for an audience, and I almost never write down how the day actually felt. A physical journal would fix that, but it just is not possible some days: I do not always have a notebook with me, I am on the go between classes, and getting a photo onto paper takes printing and gluing. When I want to look back at a month, there is no single place that shows it.</p>
+<p><strong>The "After" workflow with this product:</strong> Once a day I open Daily Frame, tap today, add any photo (it does not need to be good), and write a few honest lines. It saves automatically and takes about a minute. Because it is digital, I can do it anywhere (on the train, between classes, in bed) with a photo I already took on my phone, which makes it a journal I can actually keep up with. The month view becomes a private visual diary I can scroll back through, with no likes, followers, or comments.</p>
 
 <h3>2. Scope & Explicit Non-Goals</h3>
 <ul>
@@ -240,7 +306,7 @@ code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; font-size: 14p
 <div class="log-entry">
 <h3>Build 1 · Intent.md & Throwaway Prototype (Due Nov 9)</h3>
 <ul>
-<li><strong>What shipped:</strong> A rough local web app in <code>app/</code>. Month calendar with a thumbnail on each day that has a photo, a day view to add or replace a photo and write a reflection, autosave, day-to-day navigation, and delete. Future days are locked. Photos are resized to 1600px and saved in the browser (IndexedDB), so nothing leaves the device. Screenshots are above.</li>
+<li><strong>What shipped:</strong> A rough local web app in <code>app/</code>. Month calendar with a thumbnail on each day that has a photo, a day view to add or replace a photo and write a reflection, autosave, day-to-day navigation, and delete. Future days are locked. Accepts JPG, PNG, HEIC (iPhone), WebP, AVIF, GIF and BMP, with drag and drop. Light (creme) and dark (grey) modes with five accent colors. Photos are resized to 1600px and saved in the browser (IndexedDB), so nothing leaves the device. Screenshots are above.</li>
 <li><strong>Things learned with AI:</strong> Used an AI agent to turn my idea into a PRD and a working prototype in one sitting. Learned that a browser can store photos locally with IndexedDB without any server or account, and that phone photos are large (several MB), so resizing before saving matters. Terminus Episodes 1 and 2: notes to add.</li>
 <li><strong>What broke / changed in PRD:</strong> My iPhone photos (HEIC) would not upload, because Chrome cannot open HEIC by itself. Fixed by adding a small in-browser HEIC converter, and the app now also takes PNG, WebP, AVIF, GIF and BMP, plus drag and drop. Added light (creme) and dark (grey) modes with five accent colors so the app feels like mine. Because data lives in one browser, entries do not sync between my phone and laptop yet. No PRD scope changes; this is v1.</li>
 <li><strong>Cost & time this week:</strong> $0.00 · ~1 hour</li>
