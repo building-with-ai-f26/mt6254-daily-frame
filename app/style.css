@@ -24,8 +24,7 @@
   --empty: #f0e7d8;
   --photo-bg: #2b2622;
   --danger: #b23b2b;
-  /* darker accent for text so it stays readable on creme */
-  --accent-ink: color-mix(in oklab, var(--accent) 68%, #000);
+  --accent-ink: var(--accent);
   --accent-soft: color-mix(in oklab, var(--accent) 22%, var(--card));
   color-scheme: light;
 }
@@ -40,7 +39,7 @@
   --empty: #2b2b30;
   --photo-bg: #111113;
   --danger: #ff8070;
-  --accent-ink: color-mix(in oklab, var(--accent) 85%, #fff);
+  --accent-ink: var(--accent);
   --accent-soft: color-mix(in oklab, var(--accent) 28%, var(--card));
   color-scheme: dark;
 }
@@ -54,7 +53,7 @@
     --empty: #2b2b30;
     --photo-bg: #111113;
     --danger: #ff8070;
-    --accent-ink: color-mix(in oklab, var(--accent) 85%, #fff);
+    --accent-ink: var(--accent);
     --accent-soft: color-mix(in oklab, var(--accent) 28%, var(--card));
     color-scheme: dark;
   }
