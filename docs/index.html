@@ -221,7 +221,7 @@ section { padding: 20px 18px; }
 <span class="brand">Daily Frame</span>
 <h1>One photo. One honest reflection. Just for you.</h1>
 <p class="tagline">For anyone tired of performing their life on social media: take one photo a day, write one honest reflection, and keep it just for yourself.</p>
-<p class="meta">Builder: Michelle (@mt6254)</p>
+<p class="meta">Builder: Michelle (@mt6254) · Pod 8</p>
 <div class="cta-row">
 <a class="btn" href="#live-demo" onclick="window.posthog && posthog.capture('clicked_try_product')">See the Product →</a>
 <a class="btn btn-secondary" href="#prd">Read the Living PRD</a>
@@ -302,9 +302,9 @@ section { padding: 20px 18px; }
 <h3>Build 1 · Intent.md & Throwaway Prototype (Due Nov 9)</h3>
 <ul>
 <li><strong>What shipped:</strong> A rough local web app in <code>app/</code>. Month calendar with a thumbnail on each day that has a photo, a day view to add or replace a photo and write a reflection, autosave, day-to-day navigation, and delete. Future days are locked. Accepts JPG, PNG, HEIC (iPhone), WebP, AVIF, GIF and BMP, with drag and drop. Light (creme) and dark (grey) modes with five accent colors. Nov 8: reflections now lock after you click Done (click Edit to change them), and the writing area has notebook lines. Photos are resized to 1600px and saved in the browser (IndexedDB), so nothing leaves the device. Screenshots are above.</li>
-<li><strong>Things learned with AI:</strong> Used an AI agent to turn my idea into a PRD and a working prototype in one sitting. Learned that a browser can store photos locally with IndexedDB without any server or account, and that phone photos are large (several MB), so resizing before saving matters. Terminus Episodes 1 and 2: notes to add.</li>
-<li><strong>What broke / changed in PRD:</strong> My iPhone photos (HEIC) would not upload, because Chrome cannot open HEIC by itself. Fixed by adding a small in-browser HEIC converter, and the app now also takes PNG, WebP, AVIF, GIF and BMP, plus drag and drop. Added light (creme) and dark (grey) modes with five accent colors so the app feels like mine. Because data lives in one browser, entries do not sync between my phone and laptop yet. No PRD scope changes; this is v1.</li>
-<li><strong>Cost & time this week:</strong> $0.00 · ~1 hour</li>
+<li><strong>Things learned with AI:</strong> Used an AI agent to turn my idea into a PRD and a working prototype, then kept iterating on it with feedback (HEIC uploads, themes, notebook lines). Learned to clone my repo and run the app from Terminal with <code>git clone</code>, <code>git pull</code> and <code>python3 -m http.server</code>. Two mistakes taught me the most: the clone command has to be on one line with the URL, and the server shows whatever folder you start it in (I started it from my home folder by accident and saw all my files). Also learned that a browser can store photos locally with IndexedDB, and that phone photos are large, so resizing them matters. Terminus Episodes 1 and 2 and the Week 1 memo: in progress, finishing before Nov 10.</li>
+<li><strong>What broke / changed in PRD:</strong> My iPhone photos (HEIC) would not upload, because Chrome cannot open HEIC by itself. Fixed by adding a small in-browser HEIC converter, and the app now also takes PNG, WebP, AVIF, GIF and BMP, plus drag and drop. Added light (creme) and dark (grey) modes with five accent colors so the app feels like mine. Because data lives in one browser, entries do not sync between my phone and laptop yet. No PRD scope changes; this is v1. I did not build on the November 3 break; building started November 7 and continued November 8.</li>
+<li><strong>Cost & time this week:</strong> $0.00 · ~2 hours</li>
 </ul>
 </div>
 
