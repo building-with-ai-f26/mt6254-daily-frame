@@ -3,7 +3,7 @@
 > **One-line pitch:** For anyone tired of performing their life on social media: take one photo a day, write one honest reflection, and keep it just for yourself.
 
 - **Builder:** Michelle (`@mt6254`)
-- **Pod:** [Pod Name / Number]
+- **Pod:** Pod 8
 - **Product Page & Living PRD:** https://building-with-ai-f26.github.io/mt6254-daily-frame/
 - **App:** runs locally through Week 4; add a cloud URL in Build 5.
 
