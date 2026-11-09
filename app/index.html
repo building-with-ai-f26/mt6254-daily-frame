@@ -93,8 +93,13 @@
       <button id="delete-btn" class="text-btn danger">Delete day</button>
     </div>
 
-    <label for="reflection" class="reflection-label">Reflection</label>
-    <textarea id="reflection" rows="7" placeholder="What happened today? How did it feel? Write it for yourself, not an audience."></textarea>
+    <div class="reflection-head">
+      <label for="reflection" class="reflection-label">Reflection</label>
+      <button id="edit-btn" class="text-btn small" hidden>&#9998; Edit</button>
+      <button id="done-btn" class="text-btn small primary" hidden>Done</button>
+    </div>
+    <div id="reflection-view" class="notebook view" hidden></div>
+    <textarea id="reflection" class="notebook" rows="8" placeholder="What happened today? How did it feel? Write it for yourself, not an audience."></textarea>
     <p id="save-status" class="save-status"></p>
   </section>
 

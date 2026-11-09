@@ -152,6 +152,7 @@ function shiftMonth(delta) {
 
 // ---------- day view ----------
 async function openDay(k) {
+  await flushReflection(); // finish saving the day we are leaving
   currentDay = k;
   location.hash = k;
   $('calendar-view').hidden = true;
@@ -162,7 +163,49 @@ async function openDay(k) {
   const e = await getEntry(k);
   showPhoto(e?.photo || null);
   $('reflection').value = e?.reflection || '';
+  // A day that already has writing opens locked; an empty day opens ready to write.
+  setReflectionMode(e?.reflection?.trim() ? 'view' : 'edit', false);
   window.scrollTo(0, 0);
+}
+
+// ---------- reflection: locked (view) vs editing ----------
+function autoGrow() {
+  const t = $('reflection');
+  t.style.height = 'auto';
+  t.style.height = t.scrollHeight + 2 + 'px';
+}
+
+function setReflectionMode(mode, focus = true) {
+  const text = $('reflection').value;
+  const editing = mode === 'edit';
+  $('reflection-view').textContent = text;
+  $('reflection-view').hidden = editing;
+  $('reflection').hidden = !editing;
+  $('edit-btn').hidden = editing;
+  // "Done" only makes sense once there is something written.
+  $('done-btn').hidden = !editing || !text.trim();
+  if (editing) {
+    autoGrow();
+    if (focus) {
+      const t = $('reflection');
+      t.focus();
+      t.setSelectionRange(t.value.length, t.value.length);
+    }
+  }
+}
+
+async function flushReflection() {
+  if (!typingTimer || !currentDay) return;
+  clearTimeout(typingTimer);
+  typingTimer = null;
+  await save({ reflection: $('reflection').value });
+}
+
+async function finishEditing() {
+  clearTimeout(typingTimer);
+  typingTimer = null;
+  await save({ reflection: $('reflection').value });
+  setReflectionMode($('reflection').value.trim() ? 'view' : 'edit', false);
 }
 
 function showPhoto(blob) {
@@ -214,11 +257,13 @@ function onPhotoChosen(ev) {
   usePhoto(file);
 }
 
-let typingTimer;
+let typingTimer = null;
 function onReflectionInput() {
   setStatus('Writing…');
+  autoGrow();
+  $('done-btn').hidden = !$('reflection').value.trim();
   clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => save({ reflection: $('reflection').value }), 500);
+  typingTimer = setTimeout(() => { typingTimer = null; save({ reflection: $('reflection').value }); }, 500);
 }
 
 function shiftDay(delta) {
@@ -229,6 +274,7 @@ function shiftDay(delta) {
 
 async function backToCalendar() {
   clearTimeout(typingTimer);
+  typingTimer = null;
   if (currentDay) await save({ reflection: $('reflection').value });
   const d = fromKey(currentDay);
   viewYear = d.getFullYear(); viewMonth = d.getMonth();
@@ -289,10 +335,15 @@ $('next-day').onclick = () => shiftDay(1);
 $('photo-input').onchange = onPhotoChosen;
 $('replace-input').onchange = onPhotoChosen;
 $('reflection').addEventListener('input', onReflectionInput);
+$('edit-btn').onclick = () => setReflectionMode('edit');
+$('done-btn').onclick = finishEditing;
 $('delete-btn').onclick = async () => {
   if (!confirm('Delete this day\'s photo and reflection?')) return;
+  clearTimeout(typingTimer);
+  typingTimer = null;
   await deleteEntry(currentDay);
   showPhoto(null); $('reflection').value = '';
+  setReflectionMode('edit', false);
   setStatus('Deleted');
 };
 

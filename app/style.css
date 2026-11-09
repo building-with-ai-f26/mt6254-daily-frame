@@ -159,12 +159,34 @@ button { font: inherit; }
 .photo-empty .formats { font-size: 12px; margin-top: 4px; }
 .photo-actions { display: flex; gap: 8px; margin-top: 10px; }
 
-.reflection-label { display: block; margin: 24px 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-textarea {
-  width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card);
-  padding: 14px 16px; font: 17px/1.6 Georgia, "Times New Roman", serif; color: var(--ink); resize: vertical;
+.reflection-head { display: flex; align-items: center; gap: 8px; margin: 24px 0 8px; min-height: 32px; }
+.reflection-label { margin: 0 auto 0 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.text-btn.small { padding: 4px 12px; font-size: 13px; }
+.text-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* ---------- notebook paper: ruled lines + a margin line in the accent color ---------- */
+.notebook {
+  --row: 30px;          /* one ruled line per row of text */
+  --pad-top: 22px;
+  --margin-x: 44px;     /* where the vertical margin line sits */
+  --rule: color-mix(in oklab, var(--line) 75%, var(--muted));
+  display: block; width: 100%;
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: var(--pad-top) 18px calc(var(--row) - 6px) calc(var(--margin-x) + 14px);
+  font: 17px/var(--row) Georgia, "Times New Roman", serif; color: var(--ink);
+  background-color: var(--card);
+  background-image:
+    linear-gradient(to right, transparent var(--margin-x), var(--accent) var(--margin-x), var(--accent) calc(var(--margin-x) + 2px), transparent calc(var(--margin-x) + 2px)),
+    linear-gradient(to bottom, transparent calc(var(--row) - 1px), var(--rule) calc(var(--row) - 1px));
+  background-size: 100% 100%, 100% var(--row);
+  background-repeat: no-repeat, repeat;
+  background-position: 0 0, 0 calc(var(--pad-top) - 3px);
+  background-attachment: local, local;
+  min-height: calc(var(--row) * 6 + var(--pad-top) + var(--row));
 }
-textarea:focus { outline: 3px solid var(--accent-soft); border-color: var(--accent); }
+textarea.notebook { resize: none; overflow: hidden; min-height: calc(var(--row) * 8 + var(--pad-top) + var(--row)); }
+textarea.notebook:focus { outline: 3px solid var(--accent-soft); border-color: var(--accent); }
+.notebook.view { white-space: pre-wrap; overflow-wrap: anywhere; cursor: default; }
 .save-status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 6px 2px; }
 .save-status.error { color: var(--danger); }
 
