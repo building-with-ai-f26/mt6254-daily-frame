@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Daily Frame</title>
 <link rel="stylesheet" href="style.css" />
+<script src="/config.js"></script>
+<script src="analytics.js"></script>
 <script>
   // Apply saved theme before first paint so there is no flash.
   try {
@@ -75,8 +77,14 @@
 
     <h2 id="day-label">Day</h2>
 
+    <div id="weather" class="weather" hidden aria-live="polite">
+      <span id="weather-icon" class="weather-icon" aria-hidden="true"></span>
+      <span id="weather-text" class="weather-text ph-mask"></span>
+      <button id="weather-retry" class="text-btn small" hidden>Retry</button>
+    </div>
+
     <div id="photo-wrap" class="photo-wrap">
-      <img id="photo" alt="Photo for this day" hidden />
+      <img id="photo" class="ph-no-capture" alt="Photo for this day" hidden />
       <label id="photo-empty" class="photo-empty">
         <span class="plus">+</span>
         <span>Add a photo for this day</span>
@@ -98,8 +106,8 @@
       <button id="edit-btn" class="text-btn small" hidden>&#9998; Edit</button>
       <button id="done-btn" class="text-btn small primary" hidden>Done</button>
     </div>
-    <div id="reflection-view" class="notebook view" hidden></div>
-    <textarea id="reflection" class="notebook" rows="8" placeholder="What happened today? How did it feel? Write it for yourself, not an audience."></textarea>
+    <div id="reflection-view" class="notebook view ph-no-capture" hidden></div>
+    <textarea id="reflection" class="notebook ph-no-capture" rows="8" placeholder="What happened today? How did it feel? Write it for yourself, not an audience."></textarea>
     <p id="save-status" class="save-status"></p>
   </section>
 

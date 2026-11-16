@@ -196,3 +196,21 @@ textarea.notebook:focus { outline: 3px solid var(--accent-soft); border-color: v
   .cell { border-radius: 7px; }
   .cell .num { font-size: 10px; top: 3px; left: 5px; }
 }
+
+/* ---------- weather snapshot (day view) ---------- */
+.weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 14px;
+  max-width: 100%;
+}
+.weather[hidden] { display: none; }
+.weather-icon { font-size: 16px; line-height: 1; }
+.weather-text { overflow-wrap: anywhere; }
+.weather.error { background: var(--empty); color: var(--muted); }

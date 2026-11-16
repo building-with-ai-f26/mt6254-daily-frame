@@ -1,7 +1,7 @@
 // Daily Frame: one photo + one reflection per day, stored only in this browser (IndexedDB).
 
 const DB_NAME = 'daily-frame';
-const STORE = 'entries'; // key: "YYYY-MM-DD" -> { date, photo: Blob|null, reflection, updatedAt }
+const STORE = 'entries'; // key: "YYYY-MM-DD" -> { date, photo: Blob|null, reflection, weather?, updatedAt }
 
 // ---------- storage ----------
 function openDB() {
@@ -132,7 +132,7 @@ async function renderCalendar() {
     if (isFuture(k)) { cell.classList.add('future'); cell.disabled = true; }
     if (e?.photo) {
       cell.classList.add('has-photo');
-      const img = document.createElement('img'); img.src = urlFor(e.photo); img.alt = '';
+      const img = document.createElement('img'); img.src = urlFor(e.photo); img.alt = ''; img.className = 'ph-no-capture';
       cell.appendChild(img);
     }
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d; cell.appendChild(num);
@@ -162,6 +162,11 @@ async function openDay(k) {
   setStatus('');
   const e = await getEntry(k);
   showPhoto(e?.photo || null);
+  showWeather(e?.weather || null);
+  const daysAgo = Math.round((fromKey(todayKey()) - fromKey(k)) / 86400000);
+  track('day_opened', { days_ago: daysAgo, has_entry: !!e, has_weather: !!e?.weather });
+  // Today's post that has content but no weather yet gets a snapshot now.
+  if (e && !e.weather && k === todayKey()) captureWeather(k);
   $('reflection').value = e?.reflection || '';
   // A day that already has writing opens locked; an empty day opens ready to write.
   setReflectionMode(e?.reflection?.trim() ? 'view' : 'edit', false);
@@ -205,6 +210,8 @@ async function finishEditing() {
   clearTimeout(typingTimer);
   typingTimer = null;
   await save({ reflection: $('reflection').value });
+  const words = $('reflection').value.trim().split(/\s+/).filter(Boolean).length;
+  track('reflection_done', { words, is_today: currentDay === todayKey() });
   setReflectionMode($('reflection').value.trim() ? 'view' : 'edit', false);
 }
 
@@ -221,13 +228,72 @@ function showPhoto(blob) {
   }
 }
 
-async function save(patch) {
-  const k = currentDay;
+async function save(patch, k = currentDay) {
   const existing = (await getEntry(k)) || { date: k, photo: null, reflection: '' };
   const entry = { ...existing, ...patch, updatedAt: Date.now() };
-  if (!entry.photo && !entry.reflection.trim()) await deleteEntry(k);
-  else await putEntry(entry);
-  setStatus('Saved on this device');
+  if (!entry.photo && !entry.reflection.trim()) { await deleteEntry(k); return; }
+  await putEntry(entry);
+  if (k === currentDay) setStatus('Saved on this device');
+  // First save of today's post: take a weather snapshot and keep it with the post.
+  if (!entry.weather && k === todayKey() && weatherFailedFor !== k) captureWeather(k);
+}
+
+// ---------- weather: a snapshot of today's weather, saved with today's post ----------
+// The browser asks our own server (server.py), which calls OpenWeatherMap with the key from .env.
+// The key never reaches the browser. Past days only show weather if it was captured that day.
+const WEATHER_ICONS = { '01d': '☀️', '01n': '🌙', '02d': '🌤️', '02n': '☁️', '03': '☁️', '04': '☁️', '09': '🌧️', '10': '🌦️', '11': '⛈️', '13': '❄️', '50': '🌫️' };
+let weatherInFlight = null, weatherFailedFor = null;
+
+function weatherIcon(code = '') { return WEATHER_ICONS[code] || WEATHER_ICONS[code.slice(0, 2)] || '🌡️'; }
+const toF = (c) => Math.round(c * 9 / 5 + 32);
+
+function showWeather(w, { loading = false, error = '' } = {}) {
+  const box = $('weather');
+  $('weather-retry').hidden = !error;
+  box.classList.toggle('error', !!error);
+  if (loading) {
+    box.hidden = false; $('weather-icon').textContent = '⋯'; $('weather-text').textContent = 'Getting today\'s weather…'; return;
+  }
+  if (error) { box.hidden = false; $('weather-icon').textContent = '⚠️'; $('weather-text').textContent = error; return; }
+  if (!w) { box.hidden = true; return; }
+  box.hidden = false;
+  $('weather-icon').textContent = weatherIcon(w.icon);
+  const time = new Date(w.capturedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const place = w.city ? ` · ${w.city}` : '';
+  $('weather-text').textContent = `${toF(w.tempC)}°F (${w.tempC}°C) · ${w.description}${place} · ${time}`;
+}
+
+function getPosition() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition((p) => resolve(p.coords), () => resolve(null), { timeout: 8000, maximumAge: 30 * 60 * 1000 });
+  });
+}
+
+function captureWeather(day) {
+  if (weatherInFlight) return weatherInFlight;
+  weatherInFlight = (async () => {
+    if (day === currentDay) showWeather(null, { loading: true });
+    const started = performance.now();
+    try {
+      const c = await getPosition(); // falls back to WEATHER_CITY in .env if location is off
+      const qs = c ? `?lat=${c.latitude.toFixed(2)}&lon=${c.longitude.toFixed(2)}` : '';
+      const res = await fetch('/api/weather' + qs);
+      const data = await res.json().catch(() => ({ error: 'Weather needs the app server. Start it with: python3 server.py' }));
+      if (!res.ok || data.error) throw new Error(data.error || 'Weather unavailable right now.');
+      weatherFailedFor = null;
+      await save({ weather: data }, day);
+      if (day === currentDay) showWeather(data);
+      track('weather_captured', { ms: Math.round(performance.now() - started), used_location: !!c });
+    } catch (err) {
+      weatherFailedFor = day; // don't retry on every autosave; the Retry button tries again
+      if (day === currentDay) showWeather(null, { error: err.message });
+      track('weather_failed', { reason: err.message });
+    } finally {
+      weatherInFlight = null;
+    }
+  })();
+  return weatherInFlight;
 }
 
 function setStatus(text, isError = false) {
@@ -243,7 +309,8 @@ async function usePhoto(file) {
     const blob = await resizeImage(file);
     if (day !== currentDay) return;
     showPhoto(blob);
-    await save({ photo: blob });
+    await save({ photo: blob }, day);
+    track('photo_added', { is_today: day === todayKey() });
   } catch (err) {
     console.error(err);
     const ext = (file.name.split('.').pop() || 'this').toUpperCase();
@@ -337,12 +404,14 @@ $('replace-input').onchange = onPhotoChosen;
 $('reflection').addEventListener('input', onReflectionInput);
 $('edit-btn').onclick = () => setReflectionMode('edit');
 $('done-btn').onclick = finishEditing;
+$('weather-retry').onclick = () => { weatherFailedFor = null; captureWeather(currentDay); };
 $('delete-btn').onclick = async () => {
   if (!confirm('Delete this day\'s photo and reflection?')) return;
   clearTimeout(typingTimer);
   typingTimer = null;
   await deleteEntry(currentDay);
-  showPhoto(null); $('reflection').value = '';
+  showPhoto(null); showWeather(null); $('reflection').value = '';
+  track('day_deleted');
   setReflectionMode('edit', false);
   setStatus('Deleted');
 };
