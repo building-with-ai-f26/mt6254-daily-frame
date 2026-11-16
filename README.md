@@ -26,7 +26,8 @@ Create your PostHog account in Week 1. Install it on the Product Page and local 
 | File / folder | Purpose |
 | --- | --- |
 | [`docs/index.html`](./docs/index.html) | Required public pitch, living PRD, and weekly build log. Update with actual work and evidence. |
-| [`app/`](./app/) | The Daily Frame prototype (plain HTML, CSS, and JavaScript; data stored in the browser with IndexedDB). |
+| [`app/`](./app/) | The Daily Frame app (plain HTML, CSS, and JavaScript; data stored in the browser with IndexedDB). |
+| [`server.py`](./server.py) | Local server: serves the app and calls OpenWeatherMap with the key from `.env`. |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting aids. No duplicate submission is required. |
 | [`AGENTS.md`](./AGENTS.md) | Local run commands, project context, and agent rules. Build 2 onward. |
 | [`tests/`](./tests/) | Verification guidance. Build 4 offers Track A domain evals **or** Track B user replays. |
@@ -36,14 +37,15 @@ Create your PostHog account in Week 1. Install it on the Product Page and local 
 
 ## Local setup
 
-No installs, accounts, or API keys needed. You only need Python 3 (preinstalled on macOS) and a browser.
+No installs needed. You need Python 3 (preinstalled on macOS), a browser, and a free [OpenWeatherMap key](https://home.openweathermap.org/api_keys) for the weather snapshot.
 
 ```bash
 git clone https://github.com/building-with-ai-f26/mt6254-daily-frame.git
-cd mt6254-daily-frame/app
-python3 -m http.server 8000
+cd mt6254-daily-frame
+cp .env.example .env          # then paste your OpenWeatherMap key into .env
+python3 server.py
 ```
 
-Then open http://localhost:8000. Tap a day, add a photo, and write a reflection. Everything saves automatically in your browser on this computer; nothing is uploaded.
+Then open http://localhost:8000. Tap today, add a photo, and write a reflection. The app saves today's weather with the post. Photos and writing save in your browser on this computer; only an approximate location goes to OpenWeatherMap, through `server.py`, so the key never reaches the browser.
 
-If your app needs API keys, use a local environment file such as `.env`. Keep private keys out of source code, browser code, screenshots, and commits. The template ignores `.env`; `.env.example` contains placeholders only.
+Keep private keys in `.env` only. Git ignores `.env`; `.env.example` holds placeholders (plus the PostHog project key, which is public by design). See [`AGENTS.md`](./AGENTS.md) for the project structure.
