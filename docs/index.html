@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Daily Frame · Building with AI (Fall 2026)</title>
 
-<!-- Week 1: create your PostHog account only.
-Build 2: paste your project's current PostHog web snippet here,
-then install analytics in the local app and verify events. -->
+<!-- PostHog (Build 2): pageviews, clicks (autocapture) and session replay on the Product Page.
+The project key below is public by design. The local app gets the same key from .env via server.py. -->
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_wbjcMJSVoSfzzTotbd7g4NN2AYmUvEPK8c8atAoRMj7N', {
+  api_host: 'https://us.i.posthog.com',
+  person_profiles: 'identified_only',
+});
+posthog.register({ surface: 'product_page' });
+</script>
 
 <style>
 /* Matches the Daily Frame app: creme light mode, dark grey dark mode,
@@ -234,9 +241,13 @@ section { padding: 20px 18px; }
 <section id="live-demo">
 <h2>Product Showcase (Prototype / Live App / 2-Min Video)</h2>
 <p>
-<strong>Current Status:</strong> Build 1: rough local prototype<br />
-<strong>Demo:</strong> Screenshots of the prototype running locally below. Cloud app URL comes in Build 5.
+<strong>Current Status:</strong> Build 2: working local slice with a real API call (OpenWeatherMap)<br />
+<strong>Demo:</strong> Screenshots of the app running locally on my laptop below. Cloud app URL comes in Build 5.
 </p>
+<figure class="shot-wide" id="weather-shot">
+<a href="app-weather.png"><img src="app-weather.png" alt="Daily Frame day view showing today's photo with a weather snapshot from OpenWeatherMap above it" onerror="document.getElementById('weather-shot').hidden = true" /></a>
+<figcaption>Build 2 working slice: add today's photo, and the app fetches the current weather from OpenWeatherMap (through a small local server that keeps the API key off the browser) and saves it with the post.</figcaption>
+</figure>
 <div class="shots shots-pair">
 <figure>
 <a href="app-calendar.png"><img src="app-calendar.png" alt="Daily Frame calendar landing page in dark mode, showing a photo thumbnail on each day that has an entry" /></a>
@@ -247,13 +258,13 @@ section { padding: 20px 18px; }
 <figcaption>Day view: the full photo and the reflection on notebook lines. Click Done to lock it, and Edit to change it.</figcaption>
 </figure>
 </div>
-<p class="meta">Screenshots use placeholder images and sample entries. To run it yourself: clone the repo, then <code>cd app</code> and <code>python3 -m http.server 8000</code>, and open <code>http://localhost:8000</code>.</p>
+<p class="meta">Calendar and day screenshots use placeholder images and sample entries. To run it yourself: clone the repo, run <code>cp .env.example .env</code> and add a free OpenWeatherMap key, then <code>python3 server.py</code> and open <code>http://localhost:8000</code>. Full steps are in <a href="https://github.com/building-with-ai-f26/mt6254-daily-frame/blob/main/AGENTS.md">AGENTS.md</a>.</p>
 </section>
 
 <!-- LIVING PRD (Updated every week!) -->
 <section id="prd">
 <h2>Living PRD (Product Requirements Document)</h2>
-<p class="meta">PRD v1 · Nov 7, 2026. Updated every week as we test with real users and learn what works.</p>
+<p class="meta">PRD v2 · Nov 16, 2026 (v1: Nov 7). Updated every week as we test with real users and learn what works.</p>
 
 <h3>1. Target User & The Job to Be Done</h3>
 <p><strong>Who is this for?</strong> Me first, then classmates in my program who already use Instagram but feel pressure to post a "perfect" photo and caption. I can reach both every week.</p>
@@ -262,15 +273,31 @@ section { padding: 20px 18px; }
 
 <h3>2. Scope & Explicit Non-Goals</h3>
 <ul>
-<li><strong>In Scope (Core Workflow):</strong> Open the calendar, tap a day, add one photo, write a reflection, and see that day's photo on the calendar afterward.</li>
+<li><strong>In Scope (Core Workflow):</strong> Open the calendar, tap a day, add one photo, write a reflection, and see that day's photo on the calendar afterward. <em>New in v2:</em> today's post automatically saves a weather snapshot (temperature, conditions, city), so each day carries a little context with zero extra effort.</li>
 <li><strong>Out of Scope #1:</strong> Any social features: sharing, followers, likes, comments, or a public feed.</li>
 <li><strong>Out of Scope #2:</strong> Photo editing, filters, or beautifying tools. The point is to not polish.</li>
 <li><strong>Out of Scope #3:</strong> Multiple photos, albums, or video per day. One frame per day keeps it simple.</li>
 </ul>
 
 <h3>3. How It Works Under the Hood & Riskiest Assumption (Week 2+)</h3>
-<p><strong>Riskiest Assumption:</strong> That people keep a daily photo and reflection habit when there is no social reward (likes or followers) pulling them back.</p>
-<p><strong>Simple Architecture:</strong> [Photo + reflection] → [Browser app: HTML/CSS/JS] → [Stored on device in IndexedDB, no AI model yet] → [Month calendar + day view]</p>
+<p><strong>Biggest risk:</strong> That people keep a daily photo and reflection habit when there is no social reward (likes or followers) pulling them back. A second, technical risk came with this build: adding an outside API to a journal that promises "everything stays on this device" could leak private data or my API key.</p>
+<p><strong>How Build 2 tests it:</strong></p>
+<ul>
+<li><strong>Measuring the habit:</strong> PostHog now runs on the app and this page. Named events (<code>day_opened</code>, <code>photo_added</code>, <code>reflection_done</code>, <code>weather_captured</code>) plus pageviews and session replays show whether I and my pod testers actually come back on separate days, and where people stop in the flow. These events carry only counts (for example, word count), never the photo or the text.</li>
+<li><strong>Making the day worth coming back to:</strong> the weather snapshot adds context automatically ("48°F, light rain") with no extra effort, so looking back at a month says more than the photo alone. The test is whether that makes people open past days more often (the <code>day_opened</code> event records how many days back each opened day is).</li>
+<li><strong>Keeping the privacy promise:</strong> the OpenWeatherMap key lives only in <code>.env</code> and is used by the local server, never by the browser. Location is rounded to about 1 km before it is sent. Session replays block photos and reflections (they show only clicks and layout).</li>
+</ul>
+<p><strong>How the app works (one user action, end to end):</strong></p>
+<ol>
+<li>I open <code>http://localhost:8000</code>. <code>server.py</code> (Python, standard library only) serves the app files from <code>app/</code>.</li>
+<li>I tap today and add a photo. The browser resizes it to 1600px and saves it in IndexedDB, on this device only.</li>
+<li>Because it is the first save of today's post, the app asks the browser for my approximate location (or falls back to the city in <code>.env</code>) and calls <code>/api/weather</code> on my own server.</li>
+<li><code>server.py</code> adds the secret key from <code>.env</code>, calls OpenWeatherMap's Current Weather API, and returns only temperature, conditions, icon and city.</li>
+<li>The app saves that snapshot inside today's entry and shows it under the date. Past days keep their snapshot; days from before this build show none (the free plan has no history).</li>
+<li>PostHog records the pageview, clicks and the <code>photo_added</code> and <code>weather_captured</code> events.</li>
+</ol>
+<p><strong>Simple Architecture:</strong> [Photo + reflection] → [Browser app: HTML/CSS/JS, IndexedDB on device] → [/api/weather on local Python server] → [OpenWeatherMap Current Weather API, key in .env] → [Weather saved with the day's entry] · [PostHog: pageviews, clicks, replay]</p>
+<p><strong>Cost per run:</strong> One weather call per post (only the first save of the day; later edits reuse the saved snapshot). On OpenWeatherMap's free plan (60 calls per minute, 1,000,000 per month) that is <strong>$0.00 per run</strong>. Even on the paid Startup plan (£30 for 10M calls a month) it would be well under $0.0001 per post. PostHog is free up to 1M events and 5,000 replays a month. No AI model yet, so no token cost.</p>
 
 <h3>4. Unit Economics & Analytics Snapshot (Updated Weekly)</h3>
 <div class="grid-2">
@@ -280,11 +307,11 @@ section { padding: 20px 18px; }
 </div>
 <div class="stat-box">
 <div class="stat-label">Est. Cost Per User Run</div>
-<div class="stat-value">$0.00 (runs on device)</div>
+<div class="stat-value">$0.00 (1 free weather call per post)</div>
 </div>
 <div class="stat-box">
 <div class="stat-label">User Evidence (Analytics from Build 2)</div>
-<div class="stat-value">Not yet measured</div>
+<div class="stat-value">PostHog live: pageviews, clicks, replay</div>
 </div>
 <div class="stat-box">
 <div class="stat-label">Sponsor Call (Week 6)</div>
@@ -311,9 +338,12 @@ section { padding: 20px 18px; }
 <div class="log-entry">
 <h3>Build 2 · Smallest Local Version & PostHog (Due Nov 16)</h3>
 <ul>
-<li><strong>What shipped:</strong> [Local working slice, PostHog verified on this page and the local app, PRD v2, and local setup in AGENTS.md]</li>
-<li><strong>What broke / changed in PRD:</strong> [Fill in]</li>
-<li><strong>Cost & time this week:</strong> $[0.00] · [0] hours</li>
+<li><strong>What shipped:</strong> A working slice with a real API call: when I add today's photo or reflection, the app fetches the current weather from OpenWeatherMap and saves it with the post (screenshot above). Added <code>server.py</code>, a tiny Python server that serves the app and calls OpenWeatherMap with the key from <code>.env</code>, so the key never reaches the browser. PostHog installed on this page and the local app with pageviews, clicks (autocapture), session replay, and named events (<code>day_opened</code>, <code>photo_added</code>, <code>reflection_done</code>, <code>weather_captured</code>, <code>weather_failed</code>). PRD v2 above, and setup and project structure in <code>AGENTS.md</code>.</li>
+<li><strong>Lessons:</strong> An API key in browser JavaScript is visible to anyone who opens dev tools, so the browser calls my own server and the server holds the key. A brand new OpenWeatherMap key can take up to two hours to start working (it returns 401 until then), so the app shows that message instead of failing silently. The PostHog project key is the opposite: it is meant to be public. Session replay records the whole screen by default, which would break my "just for you" promise, so photos and reflections are blocked from replays.</li>
+<li><strong>What broke / changed in PRD:</strong> I wanted weather for every past day too, but the free OpenWeatherMap plan only gives current weather (history needs One Call 3.0 with a card on file). Changed the design to a snapshot taken on the day you post, which also fits the product better: it records the day as it was. The app also now needs <code>python3 server.py</code> instead of <code>python3 -m http.server</code>, because a plain file server cannot hide the key. PRD v2 adds the privacy risk, the end-to-end flow and cost per run.</li>
+<li><strong>Problems still open:</strong> Entries still live in one browser, so my phone and laptop do not sync. Weather only appears on days posted from now on.</li>
+<li><strong>How it was built:</strong> All of Build 2 happened in one late-night session on November 16, the night before the deadline (about 1:45 to 2:20 AM). An AI agent (Claude, running in my browser) wrote <code>server.py</code>, the weather feature and the PostHog setup, and drafted PRD v2, <code>AGENTS.md</code> and this log. I chose the feature, picked the weather design (snapshot today rather than paying for history), gave it my PostHog login, and reviewed the result. I did not build on any other day this week, so I missed the "commits on two different days" requirement for Build 2.</li>
+<li><strong>Cost & time this week:</strong> $0.00 API spend (OpenWeatherMap and PostHog free plans) · about 0.5 hours in the agent session, plus my time setting up the key and testing on my laptop</li>
 </ul>
 </div>
 
