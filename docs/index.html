@@ -241,7 +241,7 @@ section { padding: 20px 18px; }
 <section id="live-demo">
 <h2>Product Showcase (Prototype / Live App / 2-Min Video)</h2>
 <p>
-<strong>Current Status:</strong> Build 2: working local slice with a real API call (OpenWeatherMap)<br />
+<strong>Current Status:</strong> Build 2: working local slice with a real API call (OpenWeatherMap), verified on my laptop and tracked in PostHog<br />
 <strong>Demo:</strong> Screenshots of the app running locally on my laptop below. Cloud app URL comes in Build 5.
 </p>
 <figure class="shot-wide" id="weather-shot">
@@ -342,8 +342,8 @@ section { padding: 20px 18px; }
 <li><strong>Lessons:</strong> An API key in browser JavaScript is visible to anyone who opens dev tools, so the browser calls my own server and the server holds the key. A brand new OpenWeatherMap key can take up to two hours to start working (it returns 401 until then), so the app shows that message instead of failing silently. The PostHog project key is the opposite: it is meant to be public. Session replay records the whole screen by default, which would break my "just for you" promise, so photos and reflections are blocked from replays.</li>
 <li><strong>What broke / changed in PRD:</strong> I wanted weather for every past day too, but the free OpenWeatherMap plan only gives current weather (history needs One Call 3.0 with a card on file). Changed the design to a snapshot taken on the day you post, which also fits the product better: it records the day as it was. The app also now needs <code>python3 server.py</code> instead of <code>python3 -m http.server</code>, because a plain file server cannot hide the key. PRD v2 adds the privacy risk, the end-to-end flow and cost per run.</li>
 <li><strong>Problems still open:</strong> Entries still live in one browser, so my phone and laptop do not sync. Weather only appears on days posted from now on.</li>
-<li><strong>How it was built:</strong> All of Build 2 happened in one late-night session on November 16, the night before the deadline (about 1:45 to 2:20 AM). An AI agent (Claude, running in my browser) wrote <code>server.py</code>, the weather feature and the PostHog setup, and drafted PRD v2, <code>AGENTS.md</code> and this log. I chose the feature, picked the weather design (snapshot today rather than paying for history), gave it my PostHog login, and reviewed the result. I did not build on any other day this week, so I missed the "commits on two different days" requirement for Build 2.</li>
-<li><strong>Cost & time this week:</strong> $0.00 API spend (OpenWeatherMap and PostHog free plans) · about 0.5 hours in the agent session, plus my time setting up the key and testing on my laptop</li>
+<li><strong>How it was built:</strong> All of Build 2 happened on November 16, the day it was due: a late-night session (about 1:45 to 2:55 AM) and a morning session (about 7:55 to 8:40 AM) setting up my OpenWeatherMap key and testing on my laptop. An AI agent (Claude, running in my browser) wrote <code>server.py</code>, the weather feature and the PostHog setup, and drafted PRD v2, <code>AGENTS.md</code> and this log. I chose the feature, picked the weather design (snapshot today rather than paying for history), gave it my PostHog login, and reviewed the result. I did not build on any other day this week, so I missed the "commits on two different days" requirement for Build 2.</li>
+<li><strong>Cost & time this week:</strong> $0.00 API spend (OpenWeatherMap and PostHog free plans) · about 2 hours (1 hour overnight with the agent, 45 minutes in the morning on my laptop)</li>
 </ul>
 </div>
 
