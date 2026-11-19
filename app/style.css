@@ -214,3 +214,108 @@ textarea.notebook:focus { outline: 3px solid var(--accent-soft); border-color: v
 .weather-icon { font-size: 16px; line-height: 1; }
 .weather-text { overflow-wrap: anywhere; }
 .weather.error { background: var(--empty); color: var(--muted); }
+
+/* ---------- mood picker (day view) ---------- */
+.section-label { margin: 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.mood { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+.mood-options { display: flex; gap: 6px; }
+.mood-options button {
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+  font-size: 22px; line-height: 1; cursor: pointer; padding: 0;
+  filter: grayscale(.6); opacity: .75; transition: transform .15s, filter .15s, opacity .15s, background-color .15s;
+}
+.mood-options button:hover { filter: none; opacity: 1; transform: translateY(-2px); }
+.mood-options button.active {
+  filter: none; opacity: 1; background: var(--accent-soft); border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent); transform: scale(1.08);
+}
+.mood-name { font-size: 14px; color: var(--muted); }
+
+/* mood emoji on a calendar day */
+.cell .mood-badge {
+  position: absolute; bottom: 3px; left: 5px; font-size: 14px; line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+}
+
+/* ---------- calendar: recap button ---------- */
+.summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 20px; }
+.summary-row .summary { margin: 0; }
+.recap-btn { border-color: var(--accent); color: var(--ink); }
+
+/* ---------- monthly recap ---------- */
+.recap-eyebrow { margin-top: 16px; }
+#recap-label { margin-top: 2px; font-size: 32px; }
+.recap-empty {
+  background: var(--card); border: 1px dashed var(--line); border-radius: 14px; padding: 28px; text-align: center; color: var(--muted);
+}
+.recap-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-top: 16px; }
+.recap-card h3 { margin-bottom: 10px; }
+.recap-summary { margin: 0; font: 18px/1.6 Georgia, "Times New Roman", serif; }
+.themes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.themes:empty { display: none; }
+.chip { background: var(--accent-soft); border-radius: 999px; padding: 3px 12px; font-size: 14px; }
+.chip small { color: var(--muted); font-size: 12px; }
+
+.mood-bars { display: grid; gap: 6px; max-width: 420px; }
+.mood-bar { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; gap: 10px; }
+.bar-emoji { font-size: 20px; line-height: 1; }
+.bar-track { height: 10px; background: var(--empty); border-radius: 999px; overflow: hidden; }
+.bar-track .fill { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .6s ease; }
+[data-accent="mix"] .bar-track .fill { background: linear-gradient(90deg, var(--pink), var(--orchid), var(--lavender), var(--blue), var(--sky)); }
+.bar-count { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.mood-strip { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 16px; }
+.strip-day {
+  width: 26px; height: 26px; border-radius: 7px; border: none; background: var(--empty);
+  font-size: 15px; line-height: 1; padding: 0; cursor: pointer;
+}
+.strip-day.none::after { content: ''; display: block; width: 5px; height: 5px; margin: auto; border-radius: 50%; background: var(--line); }
+
+.quotes { display: grid; gap: 10px; }
+.quote {
+  display: block; text-align: left; width: 100%; cursor: pointer; color: var(--ink);
+  background: none; border: none; border-left: 3px solid var(--accent); padding: 4px 0 4px 14px;
+}
+.quote-text { display: block; font: italic 17px/1.55 Georgia, "Times New Roman", serif; }
+.quote-date { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+.quote:hover .quote-text { color: var(--accent-ink); }
+
+/* ---------- animated collage ---------- */
+.collage-block { position: relative; margin-top: 8px; }
+.collage {
+  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: clamp(72px, 21vw, 164px);
+  grid-auto-flow: dense; gap: 6px; border-radius: 16px; overflow: hidden;
+}
+.tile {
+  position: relative; overflow: hidden; border: none; padding: 0; cursor: pointer; border-radius: 8px;
+  background: var(--photo-bg);
+  animation: tile-in .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 90ms);
+}
+.tile img {
+  width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .45s ease;
+  animation: drift 16s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.9s);
+}
+.tile.swapping img { opacity: 0; }
+.tile-date {
+  position: absolute; left: 8px; bottom: 6px; font-size: 12px; font-weight: 600; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.7); opacity: 0; transition: opacity .2s;
+}
+.tile:hover .tile-date, .tile:focus-visible .tile-date { opacity: 1; }
+.collage.paused .tile img { animation-play-state: paused; }
+.collage-toggle {
+  position: absolute; right: 10px; bottom: 10px; background: rgba(20,20,22,.6); color: #fff;
+  border-color: rgba(255,255,255,.25); backdrop-filter: blur(6px);
+}
+@keyframes tile-in { from { opacity: 0; transform: scale(.85) translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes drift {
+  from { transform: scale(1.04) translate(0, 0); }
+  to   { transform: scale(1.18) translate(var(--dx), var(--dy)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile { animation: none; }
+  .tile img { animation: none; transition: none; }
+}
+@media (max-width: 480px) {
+  .collage { gap: 4px; border-radius: 12px; }
+  .mood-options button { width: 40px; height: 40px; font-size: 20px; }
+  .cell .mood-badge { font-size: 11px; bottom: 2px; left: 3px; }
+}

@@ -55,7 +55,10 @@
       </div>
     </header>
 
-    <p id="month-summary" class="summary"></p>
+    <div class="summary-row">
+      <p id="month-summary" class="summary"></p>
+      <button id="recap-btn" class="text-btn small recap-btn">&#10024; Month recap</button>
+    </div>
 
     <div class="weekdays">
       <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
@@ -81,6 +84,18 @@
       <span id="weather-icon" class="weather-icon" aria-hidden="true"></span>
       <span id="weather-text" class="weather-text ph-mask"></span>
       <button id="weather-retry" class="text-btn small" hidden>Retry</button>
+    </div>
+
+    <div class="mood" role="group" aria-labelledby="mood-label">
+      <span id="mood-label" class="section-label">Mood</span>
+      <div id="mood-options" class="mood-options">
+        <button data-mood="1" aria-pressed="false" aria-label="Rough" title="Rough">&#128542;</button>
+        <button data-mood="2" aria-pressed="false" aria-label="Low" title="Low">&#128533;</button>
+        <button data-mood="3" aria-pressed="false" aria-label="Okay" title="Okay">&#128528;</button>
+        <button data-mood="4" aria-pressed="false" aria-label="Good" title="Good">&#128578;</button>
+        <button data-mood="5" aria-pressed="false" aria-label="Great" title="Great">&#128516;</button>
+      </div>
+      <span id="mood-name" class="mood-name"></span>
     </div>
 
     <div id="photo-wrap" class="photo-wrap">
@@ -109,6 +124,49 @@
     <div id="reflection-view" class="notebook view ph-no-capture" hidden></div>
     <textarea id="reflection" class="notebook ph-no-capture" rows="8" placeholder="What happened today? How did it feel? Write it for yourself, not an audience."></textarea>
     <p id="save-status" class="save-status"></p>
+  </section>
+
+  <!-- MONTHLY RECAP VIEW -->
+  <section id="recap-view" hidden>
+    <header class="top">
+      <button id="recap-back" class="text-btn">&#8249; Calendar</button>
+      <div class="nav">
+        <button id="recap-prev" class="icon-btn" aria-label="Previous month">&#8249;</button>
+        <button id="recap-next" class="icon-btn" aria-label="Next month">&#8250;</button>
+      </div>
+    </header>
+
+    <p class="eyebrow recap-eyebrow">Monthly recap</p>
+    <h2 id="recap-label">Month</h2>
+    <p id="recap-stats" class="summary"></p>
+
+    <p id="recap-empty" class="recap-empty" hidden>Nothing saved this month yet. Add a photo, a mood or a few words on any day and your recap will build itself here.</p>
+
+    <div id="recap-body">
+      <div id="collage-block" class="collage-block">
+        <div id="collage" class="collage ph-no-capture" aria-label="Animated collage of this month's photos"></div>
+        <button id="collage-toggle" class="text-btn small collage-toggle" aria-pressed="false">Pause</button>
+      </div>
+
+      <section class="recap-card ph-no-capture" id="recap-summary-card">
+        <h3 class="section-label">Your month in a few lines</h3>
+        <p id="recap-summary" class="recap-summary"></p>
+        <div id="recap-themes" class="themes"></div>
+      </section>
+
+      <section class="recap-card ph-no-capture" id="recap-mood-card">
+        <h3 class="section-label">Mood</h3>
+        <div id="recap-mood-bars" class="mood-bars"></div>
+        <div id="recap-mood-strip" class="mood-strip" aria-label="Mood for each day"></div>
+      </section>
+
+      <section class="recap-card ph-no-capture" id="recap-quotes-card">
+        <h3 class="section-label">In your words</h3>
+        <div id="recap-quotes" class="quotes"></div>
+      </section>
+
+      <p class="footnote">This recap is made in your browser from your own entries. Nothing is sent anywhere.</p>
+    </div>
   </section>
 
 </main>

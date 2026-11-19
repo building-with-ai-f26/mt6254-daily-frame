@@ -1,7 +1,7 @@
 // Daily Frame: one photo + one reflection per day, stored only in this browser (IndexedDB).
 
 const DB_NAME = 'daily-frame';
-const STORE = 'entries'; // key: "YYYY-MM-DD" -> { date, photo: Blob|null, reflection, weather?, updatedAt }
+const STORE = 'entries'; // key: "YYYY-MM-DD" -> { date, photo: Blob|null, reflection, mood?: 1-5, weather?, updatedAt }
 
 // ---------- storage ----------
 function openDB() {
@@ -137,6 +137,11 @@ async function renderCalendar() {
     }
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d; cell.appendChild(num);
     if (e?.reflection?.trim()) { const dot = document.createElement('span'); dot.className = 'dot'; cell.appendChild(dot); }
+    if (e?.mood) {
+      const m = document.createElement('span'); m.className = 'mood-badge'; m.textContent = MOODS[e.mood].emoji;
+      cell.appendChild(m);
+      cell.setAttribute('aria-label', `${fromKey(k).toDateString()}, mood: ${MOODS[e.mood].name}`);
+    }
     cell.addEventListener('click', () => openDay(k));
     grid.appendChild(cell);
   }
@@ -155,6 +160,8 @@ async function openDay(k) {
   await flushReflection(); // finish saving the day we are leaving
   currentDay = k;
   location.hash = k;
+  stopCollage();
+  $('recap-view').hidden = true;
   $('calendar-view').hidden = true;
   $('day-view').hidden = false;
   $('day-label').textContent = fromKey(k).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -163,6 +170,7 @@ async function openDay(k) {
   const e = await getEntry(k);
   showPhoto(e?.photo || null);
   showWeather(e?.weather || null);
+  showMood(e?.mood || null);
   const daysAgo = Math.round((fromKey(todayKey()) - fromKey(k)) / 86400000);
   track('day_opened', { days_ago: daysAgo, has_entry: !!e, has_weather: !!e?.weather });
   // Today's post that has content but no weather yet gets a snapshot now.
@@ -231,7 +239,7 @@ function showPhoto(blob) {
 async function save(patch, k = currentDay) {
   const existing = (await getEntry(k)) || { date: k, photo: null, reflection: '' };
   const entry = { ...existing, ...patch, updatedAt: Date.now() };
-  if (!entry.photo && !entry.reflection.trim()) { await deleteEntry(k); return; }
+  if (!entry.photo && !entry.reflection.trim() && !entry.mood) { await deleteEntry(k); return; }
   await putEntry(entry);
   if (k === currentDay) setStatus('Saved on this device');
   // First save of today's post: take a weather snapshot and keep it with the post.
@@ -352,6 +360,315 @@ async function backToCalendar() {
   renderCalendar();
 }
 
+// ---------- mood: one of five emojis per day, saved as entry.mood (1 = rough ... 5 = great) ----------
+const MOODS = [null,
+  { emoji: '😞', name: 'Rough' }, { emoji: '😕', name: 'Low' }, { emoji: '😐', name: 'Okay' },
+  { emoji: '🙂', name: 'Good' }, { emoji: '😄', name: 'Great' }];
+
+function showMood(m) {
+  document.querySelectorAll('#mood-options button').forEach((b) => {
+    const on = Number(b.dataset.mood) === m;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  $('mood-name').textContent = m ? MOODS[m].name : (currentDay === todayKey() ? 'How did today feel?' : 'How did this day feel?');
+}
+
+async function onMoodClick(e) {
+  const b = e.target.closest('button[data-mood]');
+  if (!b || !currentDay) return;
+  const day = currentDay;
+  await flushReflection(); // don't lose words typed in the last half second
+  const m = Number(b.dataset.mood);
+  const next = (await getEntry(day))?.mood === m ? null : m; // tap the same mood again to clear it
+  showMood(next);
+  await save({ mood: next }, day);
+  // Only a flag goes to analytics, never which mood was picked.
+  track(next ? 'mood_set' : 'mood_cleared', { is_today: day === todayKey() });
+}
+
+// ---------- monthly recap: summary + animated collage, built in this browser from this month's entries ----------
+// No AI and no network calls: the "summary" is made from your own words (recurring themes, standout
+// sentences) and your moods, so reflections and photos never leave the device.
+let recapYear, recapMonth, collageTimer = null, collagePaused = false;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+const STOPWORDS = new Set(`a about above after again against all almost also always am an and another any anyone anything
+are aren't around as at back be became because been before being below between both but by came can can't cannot come
+could couldn't did didn't do does doesn't doing don't done down during each either else enough even ever every everything
+few first for from get gets getting got gotten had hadn't has hasn't have haven't having he he'd he'll her here hers herself
+him himself his how however i i'd i'll i'm i've if in into is isn't it it'd it'll its itself just keep kind know last least
+less let like little lot lots made make makes making many may maybe me might mine more most much must my myself need never
+new next no nor not nothing now of off oh ok okay on once one only onto or other others our ours ourselves out over own
+pretty put quite rather really right said same say says see seem seemed seems she she'd she'll should shouldn't since so
+some somehow something sometimes somewhat still such sure take than that that's the their theirs them themselves then there
+there's these they they'd they'll they're they've thing things think this those though through thru to today together too
+took toward tried try trying under until up upon us very want wanted was wasn't way we we'd we'll we're we've well went were
+weren't what what's whatever when where whether which while who whole whom whose why will with without won't would wouldn't
+yeah yes yet you you'd you'll you're you've your yours yourself day days time times bit feel feeling felt going gonna lol
+also tonight morning night yesterday tomorrow week`.split(/\s+/));
+
+const mean = (xs) => xs.reduce((t, x) => t + x, 0) / xs.length;
+const shortDate = (k) => fromKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const listJoin = (xs) => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+function shuffle(xs) { for (let i = xs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [xs[i], xs[j]] = [xs[j], xs[i]]; } return xs; }
+
+function wordsOf(text) {
+  return (text.toLowerCase().match(/[a-zÀ-ɏ']+/g) || [])
+    .map((w) => w.replace(/^'+|'+$/g, '').replace(/'s$/, ''))
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+}
+function sentencesOf(text) {
+  return (text.replace(/\s+/g, ' ').match(/[^.!?]+[.!?]*/g) || []).map((x) => x.trim()).filter(Boolean);
+}
+
+function analyzeMonth(entries) {
+  const written = entries.filter((e) => e.reflection?.trim());
+  // dayFreq: on how many different days a word shows up. A word used on many days is a theme.
+  const dayFreq = new Map(), total = new Map();
+  for (const e of written) {
+    const ws = wordsOf(e.reflection);
+    ws.forEach((w) => total.set(w, (total.get(w) || 0) + 1));
+    new Set(ws).forEach((w) => dayFreq.set(w, (dayFreq.get(w) || 0) + 1));
+  }
+  // Keep names capitalized: a word you always write with a capital (Sam, Brooklyn) stays that way.
+  const seenLower = new Set(), seenCap = new Set();
+  written.forEach((e) => (e.reflection.match(/[A-Za-z\u00c0-\u024f']+/g) || []).forEach((raw) => {
+    const w = raw.toLowerCase().replace(/'s$/, '');
+    (raw[0] === raw[0].toLowerCase() ? seenLower : seenCap).add(w);
+  }));
+  const properNames = new Set([...seenCap].filter((w) => !seenLower.has(w)));
+  const minDays = written.length >= 3 ? 2 : 1;
+  const themes = [...dayFreq].filter(([, d]) => d >= minDays)
+    .sort((a, b) => b[1] - a[1] || total.get(b[0]) - total.get(a[0]))
+    .slice(0, 8).map(([word, days]) => ({ word: properNames.has(word) ? word[0].toUpperCase() + word.slice(1) : word, days }));
+
+  // One standout sentence per day (the one most built from this month's recurring words),
+  // then the best few across the month, shown in date order.
+  const picks = written.map((e) => {
+    let best = null;
+    for (const text of sentencesOf(e.reflection)) {
+      const n = text.split(/\s+/).length;
+      if (n < 4 || n > 45) continue;
+      const score = wordsOf(text).reduce((t, w) => t + (dayFreq.get(w) || 0), 0) / Math.sqrt(n)
+        + (e.mood === 1 || e.mood === 5 ? 1 : 0); // big-feeling days are worth remembering
+      if (!best || score > best.score) best = { text, score };
+    }
+    if (!best) {
+      const t = e.reflection.trim().replace(/\s+/g, ' ');
+      best = { text: t.length > 220 ? t.slice(0, 217) + '…' : t, score: 0 };
+    }
+    return { date: e.date, mood: e.mood, ...best };
+  });
+  const quotes = picks.sort((a, b) => b.score - a.score).slice(0, 4).sort((a, b) => a.date.localeCompare(b.date));
+
+  const moods = entries.filter((e) => e.mood).sort((a, b) => a.date.localeCompare(b.date));
+  const counts = [0, 0, 0, 0, 0, 0];
+  moods.forEach((e) => counts[e.mood]++);
+  let trend = null;
+  if (moods.length >= 4) {
+    const half = Math.floor(moods.length / 2);
+    const diff = mean(moods.slice(-half).map((e) => e.mood)) - mean(moods.slice(0, half).map((e) => e.mood));
+    trend = diff > 0.5 ? 'up' : diff < -0.5 ? 'down' : 'steady';
+  }
+  const wordCount = (e) => e.reflection.trim().split(/\s+/).length;
+  const longest = written.reduce((best, e) => (!best || wordCount(e) > wordCount(best) ? e : best), null);
+  const words = written.reduce((n, e) => n + wordCount(e), 0);
+  return { written, themes, quotes, moods, counts, trend, longest, longestWords: longest ? wordCount(longest) : 0, words };
+}
+
+function summaryText(entries, a, daysSoFar, isThisMonth) {
+  const out = [];
+  out.push(`You showed up on ${entries.length} of ${daysSoFar} days${isThisMonth ? ' so far' : ''}.`);
+  if (a.moods.length) {
+    const top = [1, 2, 3, 4, 5].sort((x, y) => a.counts[y] - a.counts[x] || y - x)[0];
+    const trend = { up: ' and your mood lifted as the month went on', down: ' and the second half felt heavier than the first', steady: ' and your mood stayed fairly steady' }[a.trend] || '';
+    out.push(`Most days felt ${MOODS[top].name.toLowerCase()} ${MOODS[top].emoji}${trend}.`);
+    const best = a.moods.reduce((b, e) => (e.mood > b.mood ? e : b));
+    const worst = a.moods.reduce((b, e) => (e.mood < b.mood ? e : b));
+    if (best.mood >= 4) out.push(`Your brightest day was ${shortDate(best.date)} ${MOODS[best.mood].emoji}.`);
+    if (worst.mood <= 2 && worst !== best) out.push(`${shortDate(worst.date)} was the hardest ${MOODS[worst.mood].emoji}, and you wrote it down anyway.`);
+  }
+  const recurring = a.themes.filter((t) => t.days >= 2).slice(0, 3).map((t) => t.word);
+  if (recurring.length) out.push(`Your writing kept coming back to ${listJoin(recurring)}.`);
+  if (a.longest && a.written.length > 1) out.push(`Your longest reflection was on ${shortDate(a.longest.date)} (${a.longestWords} words).`);
+  if (!a.written.length) out.push('No reflections written this month, so this recap is all photos and moods.');
+  return out.join(' ');
+}
+
+// ---------- the animated collage ----------
+// Up to 9 tiles in a 4-column mosaic. Each photo slowly drifts and zooms; every few seconds one tile
+// crossfades to a photo that isn't showing yet (or two tiles trade places when every photo is already up).
+function tileSpan(i, n) {
+  if (n === 1) return [4, 2];
+  if (n === 2) return [2, 2];
+  if (i === 0) return [2, 2];
+  if (n === 3) return [2, 1];
+  if (n === 4) return i === 1 ? [2, 1] : [1, 1];
+  if (n === 6 && i === 5) return [4, 1];
+  if (n === 7 && i >= 5) return [2, 1];
+  if (n === 8 && i === 7) return [2, 1];
+  return [1, 1];
+}
+
+function setTile(tile, entry, url) {
+  tile.dataset.date = entry.date;
+  tile.querySelector('img').src = url;
+  tile.querySelector('.tile-date').textContent = shortDate(entry.date);
+  tile.setAttribute('aria-label', `Open ${fromKey(entry.date).toDateString()}`);
+}
+
+function stopCollage() { clearInterval(collageTimer); collageTimer = null; }
+
+function buildCollage(photoEntries) {
+  stopCollage();
+  const box = $('collage');
+  box.innerHTML = '';
+  $('collage-block').hidden = !photoEntries.length;
+  if (!photoEntries.length) return;
+  const urls = new Map(photoEntries.map((e) => [e.date, urlFor(e.photo)]));
+  const order = shuffle([...photoEntries]);
+  const n = Math.min(order.length, 9);
+  const pool = order.slice(n); // photos waiting for their turn
+  const shown = order.slice(0, n);
+  shown.forEach((e, i) => {
+    const tile = el('button', 'tile');
+    const [c, r] = tileSpan(i, n);
+    tile.style.gridColumn = `span ${c}`;
+    tile.style.gridRow = `span ${r}`;
+    tile.style.setProperty('--i', i);
+    tile.style.setProperty('--dx', `${(Math.random() * 6 - 3).toFixed(1)}%`);
+    tile.style.setProperty('--dy', `${(Math.random() * 6 - 3).toFixed(1)}%`);
+    tile.append(el('img'), el('span', 'tile-date'));
+    tile.querySelector('img').alt = '';
+    setTile(tile, e, urls.get(e.date));
+    tile.onclick = () => openDay(tile.dataset.date);
+    box.appendChild(tile);
+  });
+
+  const tiles = [...box.children];
+  const fadeSwap = (tile, entry) => {
+    tile.classList.add('swapping');
+    setTimeout(() => { setTile(tile, entry, urls.get(entry.date)); tile.classList.remove('swapping'); }, 450);
+  };
+  if (n < 2) return;
+  collageTimer = setInterval(() => {
+    if (collagePaused || document.hidden) return;
+    const i = Math.floor(Math.random() * n);
+    if (pool.length) {
+      pool.push(shown[i]);
+      shown[i] = pool.shift();
+      fadeSwap(tiles[i], shown[i]);
+    } else {
+      let j = Math.floor(Math.random() * (n - 1)); if (j >= i) j++;
+      [shown[i], shown[j]] = [shown[j], shown[i]];
+      fadeSwap(tiles[i], shown[i]); fadeSwap(tiles[j], shown[j]);
+    }
+  }, 2800);
+}
+
+function setCollagePaused(paused) {
+  collagePaused = paused;
+  $('collage').classList.toggle('paused', paused);
+  $('collage-toggle').textContent = paused ? '▶ Play' : '❚❚ Pause';
+  $('collage-toggle').setAttribute('aria-pressed', String(paused));
+}
+
+// ---------- recap view ----------
+async function openRecap(y, m) {
+  await flushReflection();
+  recapYear = y; recapMonth = m;
+  revokeUrls();
+  currentDay = null;
+  history.replaceState(null, '', `#recap-${y}-${pad(m + 1)}`);
+  $('calendar-view').hidden = true;
+  $('day-view').hidden = true;
+  $('recap-view').hidden = false;
+
+  const first = new Date(y, m, 1);
+  const now = new Date();
+  const isThisMonth = y === now.getFullYear() && m === now.getMonth();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const daysSoFar = isThisMonth ? now.getDate() : daysInMonth;
+  $('recap-label').textContent = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  $('recap-next').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
+
+  const entries = (await getMonth(y, m)).sort((a, b) => a.date.localeCompare(b.date));
+  const photos = entries.filter((e) => e.photo);
+  const a = analyzeMonth(entries);
+  $('recap-empty').hidden = !!entries.length;
+  $('recap-body').hidden = !entries.length;
+  $('recap-stats').textContent = entries.length
+    ? `${entries.length} day${entries.length === 1 ? '' : 's'} · ${photos.length} photo${photos.length === 1 ? '' : 's'} · ${a.words} word${a.words === 1 ? '' : 's'} · ${a.moods.length} mood${a.moods.length === 1 ? '' : 's'}`
+    : '';
+  window.scrollTo(0, 0);
+  track('recap_opened', { is_this_month: isThisMonth, days: entries.length, photos: photos.length, moods: a.moods.length });
+  if (!entries.length) { stopCollage(); return; }
+
+  setCollagePaused(reduceMotion.matches); // respect "reduce motion": start still, Play is one tap away
+  buildCollage(photos);
+
+  $('recap-summary').textContent = summaryText(entries, a, daysSoFar, isThisMonth);
+  const themes = $('recap-themes');
+  themes.innerHTML = '';
+  a.themes.forEach((t) => {
+    const chip = el('span', 'chip', t.word);
+    if (t.days > 1) chip.append(el('small', null, ` ${t.days} days`));
+    themes.appendChild(chip);
+  });
+
+  $('recap-mood-card').hidden = !a.moods.length;
+  const bars = $('recap-mood-bars');
+  bars.innerHTML = '';
+  const maxCount = Math.max(1, ...a.counts);
+  for (let v = 5; v >= 1; v--) {
+    const row = el('div', 'mood-bar');
+    const fill = el('span', 'fill');
+    fill.style.width = `${(a.counts[v] / maxCount) * 100}%`;
+    const track_ = el('span', 'bar-track'); track_.appendChild(fill);
+    row.append(el('span', 'bar-emoji', MOODS[v].emoji), track_, el('span', 'bar-count', String(a.counts[v])));
+    row.setAttribute('aria-label', `${MOODS[v].name}: ${a.counts[v]} day${a.counts[v] === 1 ? '' : 's'}`);
+    bars.appendChild(row);
+  }
+  const strip = $('recap-mood-strip');
+  strip.innerHTML = '';
+  const byDate = Object.fromEntries(entries.map((e) => [e.date, e]));
+  for (let d = 1; d <= daysSoFar; d++) {
+    const k = key(new Date(y, m, d));
+    const mood = byDate[k]?.mood;
+    const b = el('button', 'strip-day' + (mood ? '' : ' none'), mood ? MOODS[mood].emoji : '');
+    b.title = `${shortDate(k)}${mood ? ': ' + MOODS[mood].name : ''}`;
+    b.setAttribute('aria-label', b.title);
+    b.onclick = () => openDay(k);
+    strip.appendChild(b);
+  }
+
+  $('recap-quotes-card').hidden = !a.quotes.length;
+  const quotes = $('recap-quotes');
+  quotes.innerHTML = '';
+  a.quotes.forEach((q) => {
+    const fig = el('button', 'quote');
+    fig.append(el('span', 'quote-text', `“${q.text}”`), el('span', 'quote-date', `${shortDate(q.date)}${q.mood ? ' ' + MOODS[q.mood].emoji : ''}`));
+    fig.onclick = () => openDay(q.date);
+    quotes.appendChild(fig);
+  });
+}
+
+function shiftRecap(delta) {
+  const d = new Date(recapYear, recapMonth + delta, 1);
+  openRecap(d.getFullYear(), d.getMonth());
+}
+
+function backFromRecap() {
+  stopCollage();
+  viewYear = recapYear; viewMonth = recapMonth;
+  history.replaceState(null, '', location.pathname);
+  $('recap-view').hidden = true;
+  $('calendar-view').hidden = false;
+  renderCalendar();
+}
+
 // ---------- theme ----------
 const MIX = ['var(--pink)', 'var(--orchid)', 'var(--lavender)', 'var(--blue)', 'var(--sky)'];
 const ACCENT_NAMES = { pink: 'Pink', orchid: 'Orchid', lavender: 'Lavender', blue: 'Cornflower', sky: 'Sky', mix: 'All five (each day gets its own color)' };
@@ -404,13 +721,19 @@ $('replace-input').onchange = onPhotoChosen;
 $('reflection').addEventListener('input', onReflectionInput);
 $('edit-btn').onclick = () => setReflectionMode('edit');
 $('done-btn').onclick = finishEditing;
+$('mood-options').onclick = onMoodClick;
+$('recap-btn').onclick = () => openRecap(viewYear, viewMonth);
+$('recap-back').onclick = backFromRecap;
+$('recap-prev').onclick = () => shiftRecap(-1);
+$('recap-next').onclick = () => shiftRecap(1);
+$('collage-toggle').onclick = () => setCollagePaused(!collagePaused);
 $('weather-retry').onclick = () => { weatherFailedFor = null; captureWeather(currentDay); };
 $('delete-btn').onclick = async () => {
   if (!confirm('Delete this day\'s photo and reflection?')) return;
   clearTimeout(typingTimer);
   typingTimer = null;
   await deleteEntry(currentDay);
-  showPhoto(null); showWeather(null); $('reflection').value = '';
+  showPhoto(null); showWeather(null); showMood(null); $('reflection').value = '';
   track('day_deleted');
   setReflectionMode('edit', false);
   setStatus('Deleted');
@@ -418,5 +741,7 @@ $('delete-btn').onclick = async () => {
 
 const now = new Date();
 viewYear = now.getFullYear(); viewMonth = now.getMonth();
+const recapHash = location.hash.match(/^#recap-(\d{4})-(\d{2})$/);
 if (/^\d{4}-\d{2}-\d{2}$/.test(location.hash.slice(1)) && !isFuture(location.hash.slice(1))) openDay(location.hash.slice(1));
+else if (recapHash) openRecap(Number(recapHash[1]), Number(recapHash[2]) - 1);
 else renderCalendar();
