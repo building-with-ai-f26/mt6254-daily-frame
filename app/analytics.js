@@ -16,7 +16,8 @@
     autocapture: true, // clicks
     session_recording: { maskAllInputs: true, maskTextSelector: '.ph-mask' },
   });
-  posthog.register({ surface: 'local_app' });
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  posthog.register({ surface: local ? 'local_app' : 'live_app' });
 
   // Named events for the core workflow. Never send reflection text or photos, only counts and flags.
   window.track = function (event, props) {
