@@ -6,11 +6,17 @@ Serves the app in ./app and adds two small endpoints:
 
 Run:  python3 server.py      then open http://localhost:8000
 Only uses the Python standard library, so there is nothing to install.
+
+The same file runs the live site on Render (see render.yaml): there it listens on 0.0.0.0
+and reads its keys from Render's environment variables instead of .env.
 """
 
 import json
+import math
 import os
+import threading
 import time
+from collections import defaultdict, deque
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -44,9 +50,52 @@ DEFAULT_CITY = os.environ.get("WEATHER_CITY", "New York,US")
 POSTHOG_KEY = real(os.environ.get("POSTHOG_KEY", ""))
 POSTHOG_HOST = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
 PORT = int(os.environ.get("PORT", "8000"))
+ON_RENDER = bool(os.environ.get("RENDER"))  # Render sets RENDER=true on every service
+# Locally only this computer can reach the server; on Render the host must accept outside traffic.
+HOST = os.environ.get("HOST", "0.0.0.0" if ON_RENDER else "127.0.0.1")
 OWM_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 calls_today = {"date": time.strftime("%Y-%m-%d"), "count": 0}
+
+# ---------- rate limits for /api/weather ----------
+# The app needs one weather call per day per person, so these limits are generous for real use
+# but stop a script from burning through the OpenWeatherMap key (free plan: 60 calls/minute).
+PER_VISITOR_PER_MIN = int(os.environ.get("WEATHER_LIMIT_PER_VISITOR", "10"))
+ALL_VISITORS_PER_MIN = int(os.environ.get("WEATHER_LIMIT_TOTAL", "50"))  # stays under the 60/min key limit
+_hits = defaultdict(deque)   # visitor -> timestamps of recent calls
+_all_hits = deque()          # timestamps of recent calls from everyone
+_lock = threading.Lock()
+
+
+def rate_limited(visitor):
+    """Return seconds to wait if this visitor (or everyone together) is over the limit, else 0."""
+    now = time.time()
+    with _lock:
+        for q in (_hits[visitor], _all_hits):
+            while q and now - q[0] > 60:
+                q.popleft()
+        mine = _hits[visitor]
+        if len(mine) >= PER_VISITOR_PER_MIN:
+            return int(60 - (now - mine[0])) + 1
+        if len(_all_hits) >= ALL_VISITORS_PER_MIN:
+            return int(60 - (now - _all_hits[0])) + 1
+        mine.append(now)
+        _all_hits.append(now)
+        if len(_hits) > 5000:  # forget idle visitors so memory stays small
+            for k in [k for k, q in _hits.items() if not q]:
+                del _hits[k]
+        return 0
+
+
+# Sent with every response. The enforced policy blocks framing and plugins; the Report-Only
+# policy is the stricter target: the browser console reports what it would block, nothing breaks.
+CSP_ENFORCED = "frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+CSP_REPORT_ONLY = (
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://us-assets.i.posthog.com; "
+    "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com; "
+    "img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; "
+    "frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+)
 
 
 def fetch_weather(params):
@@ -71,9 +120,34 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(APP_DIR), **kwargs)
 
-    def send_json(self, status, body):
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Permissions-Policy", "geolocation=(self), camera=(), microphone=()")
+        self.send_header("Content-Security-Policy", CSP_ENFORCED)
+        self.send_header("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY)
+        if ON_RENDER:
+            self.send_header("Strict-Transport-Security", "max-age=31536000")
+        super().end_headers()
+
+    def list_directory(self, path):
+        # Don't show folder listings (for example /vendor/) to visitors.
+        self.send_error(404, "Not found")
+        return None
+
+    def visitor(self):
+        """Best guess at who is calling. On Render the real address is in X-Forwarded-For."""
+        fwd = self.headers.get("X-Forwarded-For", "")
+        if ON_RENDER and fwd:
+            return fwd.split(",")[0].strip()
+        return self.client_address[0]
+
+    def send_json(self, status, body, extra_headers=None):
         data = json.dumps(body).encode()
         self.send_response(status)
+        for k, v in (extra_headers or {}).items():
+            self.send_header(k, v)
         self.send_header("Content-Type", "application/json")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(data)))
@@ -97,6 +171,11 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def weather(self, qs):
+        wait = rate_limited(self.visitor())
+        if wait:
+            print(f"[weather] 429 rate limit for a visitor, retry in {wait}s")
+            return self.send_json(429, {"error": "Too many weather requests. Try again in a minute."},
+                                  {"Retry-After": str(wait)})
         if not OWM_KEY:
             return self.send_json(503, {"error": "No weather key set. Add OPENWEATHER_API_KEY to .env and restart the server."})
         lat, lon = qs.get("lat", [None])[0], qs.get("lon", [None])[0]
@@ -105,6 +184,9 @@ class Handler(SimpleHTTPRequestHandler):
             params = {"lat": round(float(lat), 2), "lon": round(float(lon), 2)} if lat and lon else {"q": DEFAULT_CITY}
         except ValueError:
             return self.send_json(400, {"error": "lat and lon must be numbers"})
+        if "lat" in params and not (math.isfinite(params["lat"]) and math.isfinite(params["lon"])
+                                    and -90 <= params["lat"] <= 90 and -180 <= params["lon"] <= 180):
+            return self.send_json(400, {"error": "lat must be -90..90 and lon -180..180"})
 
         today = time.strftime("%Y-%m-%d")
         if calls_today["date"] != today:
@@ -137,11 +219,11 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"Daily Frame running at http://localhost:{PORT}")
+    print(f"Daily Frame running at http://localhost:{PORT}" + (f" (listening on {HOST})" if ON_RENDER else ""))
     print(f"  Weather: {'key loaded' if OWM_KEY else 'NO KEY (add OPENWEATHER_API_KEY to .env)'}")
     print(f"  PostHog: {'key loaded' if POSTHOG_KEY else 'off (add POSTHOG_KEY to .env)'}")
     print("Press Ctrl+C to stop.")
     try:
-        ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+        ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
     except KeyboardInterrupt:
         print("\nStopped.")
