@@ -241,8 +241,8 @@ section { padding: 20px 18px; }
 <section id="live-demo">
 <h2>Product Showcase (Prototype / Live App / 2-Min Video)</h2>
 <p>
-<strong>Current Status:</strong> Build 2: working local slice with a real API call (OpenWeatherMap), verified on my laptop and tracked in PostHog<br />
-<strong>Demo:</strong> Screenshots of the app running locally on my laptop below. Cloud app URL comes in Build 5.
+<strong>Current Status:</strong> Build 3: live on the web, with a security audit (<a href="https://github.com/building-with-ai-f26/mt6254-daily-frame/blob/main/SECURITY.md">SECURITY.md</a>)<br />
+<strong>Live app:</strong> <a href="https://daily-frame.onrender.com">daily-frame.onrender.com</a> (works on a phone; the first visit can take about a minute while the free server wakes up). Screenshots below.
 </p>
 <figure class="shot-wide" id="weather-shot">
 <a href="app-weather.png"><img src="app-weather.png" alt="Daily Frame day view showing today's photo with a weather snapshot from OpenWeatherMap above it" onerror="document.getElementById('weather-shot').hidden = true" /></a>
@@ -264,7 +264,7 @@ section { padding: 20px 18px; }
 <!-- LIVING PRD (Updated every week!) -->
 <section id="prd">
 <h2>Living PRD (Product Requirements Document)</h2>
-<p class="meta">PRD v2 · Nov 16, 2026 (v1: Nov 7). Updated every week as we test with real users and learn what works.</p>
+<p class="meta">PRD v3 · Nov 23, 2026 (v2: Nov 16, v1: Nov 7). Updated every week as we test with real users and learn what works.</p>
 
 <h3>1. Target User & The Job to Be Done</h3>
 <p><strong>Who is this for?</strong> Me first, then classmates in my program who already use Instagram but feel pressure to post a "perfect" photo and caption. I can reach both every week.</p>
@@ -296,7 +296,13 @@ section { padding: 20px 18px; }
 <li>The app saves that snapshot inside today's entry and shows it under the date. Past days keep their snapshot; days from before this build show none (the free plan has no history).</li>
 <li>PostHog records the pageview, clicks and the <code>photo_added</code> and <code>weather_captured</code> events.</li>
 </ol>
-<p><strong>Simple Architecture:</strong> [Photo + reflection] → [Browser app: HTML/CSS/JS, IndexedDB on device] → [/api/weather on local Python server] → [OpenWeatherMap Current Weather API, key in .env] → [Weather saved with the day's entry] · [PostHog: pageviews, clicks, replay]</p>
+<p><strong>Hosting, database and security (new in v3):</strong></p>
+<ul>
+<li><strong>Hosting:</strong> the app runs on Render (free web service) from the same <code>server.py</code> I use locally, set up by <code>render.yaml</code> and redeployed from <code>main</code> with Render's Manual Deploy button. This Product Page stays on GitHub Pages. GitHub Pages alone could not work for the app, because it cannot run the server that hides the weather key.</li>
+<li><strong>Database:</strong> none on the server, on purpose. Journals stay in each visitor's own browser (IndexedDB), which keeps the "just for you" promise: there is no server copy to leak. The trade-off is no sync between devices and no backup.</li>
+<li><strong>Security:</strong> the weather key lives only in Render's environment variables. <code>/api/weather</code> has a rate limit (10 calls per visitor per minute, 50 for everyone), so a script cannot burn the free quota; it answers 429 after that. Security headers block other sites from framing the app. Full audit, including what I tried against the app and what is still open, in <a href="https://github.com/building-with-ai-f26/mt6254-daily-frame/blob/main/SECURITY.md">SECURITY.md</a>.</li>
+</ul>
+<p><strong>Simple Architecture:</strong> [Photo + reflection] → [Browser app: HTML/CSS/JS, IndexedDB on device] → [/api/weather on the Python server, hosted on Render, rate-limited] → [OpenWeatherMap Current Weather API, key in Render's environment variables] → [Weather saved with the day's entry] · [PostHog: pageviews, clicks, replay]</p>
 <p><strong>Cost per run:</strong> One weather call per post (only the first save of the day; later edits reuse the saved snapshot). On OpenWeatherMap's free plan (60 calls per minute, 1,000,000 per month) that is <strong>$0.00 per run</strong>. Even on the paid Startup plan (£30 for 10M calls a month) it would be well under $0.0001 per post. PostHog is free up to 1M events and 5,000 replays a month. No AI model yet, so no token cost.</p>
 
 <h3>4. Unit Economics & Analytics Snapshot (Updated Weekly)</h3>
@@ -350,9 +356,10 @@ section { padding: 20px 18px; }
 <div class="log-entry">
 <h3>Build 3 · Build.exe: The Core Workflow (Due Nov 23)</h3>
 <ul>
-<li><strong>What shipped:</strong> [End-to-end workflow working with real inputs + PostHog funnel events]</li>
-<li><strong>What broke / changed in PRD:</strong> [Fill in]</li>
-<li><strong>Cost & time this week:</strong> $[0.00] · [0] hours</li>
+<li><strong>What shipped:</strong> Nov 19: a daily mood picker (five emojis) and a monthly recap with a summary, mood trend and an animated photo collage. Nov 22–23: the app is live at <a href="https://daily-frame.onrender.com">daily-frame.onrender.com</a> on Render, with a rate limit on the weather route, security headers, input checks, and a full audit in <code>SECURITY.md</code>. <code>AGENTS.md</code> now has Shipping steps, an "Ask me first" list, and rules from real agent mistakes. PostHog now tags live visits as <code>live_app</code>.</li>
+<li><strong>Things learned with AI:</strong> Going live is more than uploading files. My server was set to listen only on my own computer (127.0.0.1), so it had to listen on 0.0.0.0 to be reachable on Render, and the weather key moved from my <code>.env</code> file into Render's environment variables so it never touches GitHub. Running the security review with Claude showed me how a public URL changes things: anyone can call my weather route in a loop, so I added a rate limit and learned what a 429 response means. I also learned to tell a secret key (OpenWeatherMap, must stay on the server) from a public one (PostHog, safe in the browser), how to search my whole Git history for leaked keys, and that a free Render server sleeps after 15 minutes, so the first visit is slow. Writing an "Ask me first" list made me think about which agent actions could actually hurt me: deleting data, touching keys, and spending money.</li>
+<li><strong>What broke / changed in PRD:</strong> The server only listened on my own computer (127.0.0.1), so it could not be reached once hosted; it now listens publicly only on Render. Before the audit, anyone could call the weather route in a loop and use up the free key's limit for everyone. The security review also turned up a public folder listing and no protection against other sites framing the app; both are fixed. PRD v3 adds hosting, the no-server-database decision, and security.</li>
+<li><strong>Cost & time this week:</strong> $0.00 (Render, OpenWeatherMap and PostHog free plans) · about 2 hours</li>
 </ul>
 </div>
 
