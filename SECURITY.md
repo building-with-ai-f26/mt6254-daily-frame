@@ -19,6 +19,8 @@ There is no sign-in and no server database, so there is no Account A / Account B
 
 No key needed rotating.
 
+**Re-run on the live site, Nov 22, 9:39 PM:** same result. The repo and all 37 commits contain no real key shapes (the only pattern matches are the `.env.example` placeholder and these docs quoting the search), the live files contain only the public `phc_` key, and `/api/weather` returned 429 with `Retry-After` after 10 calls. Screenshot: [`docs/security-test.jpg`](docs/security-test.jpg).
+
 ## What I checked
 
 1. **Access controls:** no accounts or shared data on the server, so nothing to cross. Each visitor's journal lives only in their own browser.
