@@ -5,7 +5,7 @@
 - **Builder:** Michelle (`@mt6254`)
 - **Pod:** Pod 8
 - **Product Page & Living PRD:** https://building-with-ai-f26.github.io/mt6254-daily-frame/
-- **App:** runs locally through Week 4; add a cloud URL in Build 5.
+- **Live app:** https://daily-frame.onrender.com (Render). Security audit: [`SECURITY.md`](./SECURITY.md).
 
 ## Start here: Build 1
 
@@ -29,7 +29,9 @@ Create your PostHog account in Week 1. Install it on the Product Page and local 
 | [`app/`](./app/) | The Daily Frame app (plain HTML, CSS, and JavaScript; data stored in the browser with IndexedDB). |
 | [`server.py`](./server.py) | Local server: serves the app and calls OpenWeatherMap with the key from `.env`. |
 | [`Intent.md`](./Intent.md), [`Plan.md`](./Plan.md), [`journal/`](./journal/) | Optional drafting aids. No duplicate submission is required. |
-| [`AGENTS.md`](./AGENTS.md) | Local run commands, project context, and agent rules. Build 2 onward. |
+| [`AGENTS.md`](./AGENTS.md) | Local run commands, project context, agent rules, Shipping steps and the Ask me first list. |
+| [`render.yaml`](./render.yaml) | Render Blueprint for the live site. |
+| [`SECURITY.md`](./SECURITY.md) | Build 3 security audit. |
 | [`tests/`](./tests/) | Verification guidance. Build 4 offers Track A domain evals **or** Track B user replays. |
 | [`SPONSOR_MEMO.md`](./SPONSOR_MEMO.md) | One-page recommendation backed by actual usage, full costs, and risks. Due December 14 at noon. |
 
