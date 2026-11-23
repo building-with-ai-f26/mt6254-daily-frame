@@ -55,7 +55,7 @@ No key needed rotating.
 
 ## Remaining issues
 
-- **Weather key on Render:** the live service was created without `OPENWEATHER_API_KEY`, so until it's pasted in (Render → daily-frame → Environment), the weather chip says "No weather key set" and the rest of the app works normally. The key is entered only in Render, never in the repo.
+- ~~**Weather key on Render:**~~ **Fixed Nov 22.** `OPENWEATHER_API_KEY` was added in Render → daily-frame → Environment (pasted by me, never in the repo). The live `/api/weather` now returns the current weather.
 - **Rate limit can be dodged by faking the visitor address.** The per-visitor limit trusts the first address in `X-Forwarded-For`, which a caller can set. The 50-a-minute limit for everyone together still protects the key, but one person could use up that shared limit for a minute.
 - **Rate limit resets when the server restarts** (it lives in memory, and Render's free plan restarts the server after it sleeps). Fine at this size.
 - **The strict Content Security Policy is report-only for now.** It's sent as `Content-Security-Policy-Report-Only` so it can't break PostHog or the HEIC converter. Next step: check the live site's console for reports, then switch it to enforced.
