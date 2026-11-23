@@ -1,0 +1,28 @@
+# Render Blueprint for the live Daily Frame app.
+# In Render: New + → Blueprint → pick this repo. Render reads this file and creates the service.
+# server.py uses only the Python standard library, so there is no build step.
+services:
+  - type: web
+    name: daily-frame
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: "echo 'No dependencies to install'"
+    startCommand: "python3 server.py"
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: PYTHONUNBUFFERED   # show server.py's [weather] logs in Render right away
+        value: "1"
+      - key: WEATHER_CITY
+        value: New York,US
+      # The PostHog project key is public by design (it is also in docs/index.html).
+      - key: POSTHOG_KEY
+        value: phc_wbjcMJSVoSfzzTotbd7g4NN2AYmUvEPK8c8atAoRMj7N
+      - key: POSTHOG_HOST
+        value: https://us.i.posthog.com
+      # Secret: Render asks you to paste it when you create the Blueprint. Never put it in this file.
+      - key: OPENWEATHER_API_KEY
+        sync: false
