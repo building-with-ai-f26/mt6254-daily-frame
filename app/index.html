@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Daily Frame</title>
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=20261124e" />
 <script src="/config.js"></script>
 <script src="analytics.js"></script>
 <script>
@@ -29,9 +29,12 @@
           <button data-mode="light" aria-pressed="false">&#9728;&#xFE0E; Day</button>
           <button data-mode="dark" aria-pressed="false">&#9790; Night</button>
         </div>
-        <button id="prev-month" class="icon-btn" aria-label="Previous month">&#8249;</button>
         <button id="today-btn" class="text-btn">Today</button>
-        <button id="next-month" class="icon-btn" aria-label="Next month">&#8250;</button>
+        <button id="recap-btn" class="text-btn recap-btn">Month recap</button>
+        <span class="arrows">
+          <button id="prev-month" class="icon-btn" aria-label="Previous month">&#8249;</button>
+          <button id="next-month" class="icon-btn" aria-label="Next month">&#8250;</button>
+        </span>
       </div>
     </header>
 
@@ -42,7 +45,6 @@
 
     <div class="summary-row">
       <p id="month-summary" class="summary"></p>
-      <button id="recap-btn" class="text-btn small recap-btn">&#10024; Month recap</button>
     </div>
 
     <div class="weekdays">
@@ -50,7 +52,6 @@
     </div>
     <div id="grid" class="grid"></div>
 
-    <p class="footnote">Just for you. No likes, no followers. Everything stays on this device.</p>
   </section>
 
   <!-- DAY VIEW -->
@@ -155,6 +156,6 @@
   </section>
 
 </main>
-<script src="app.js"></script>
+<script src="app.js?v=20261124e"></script>
 </body>
 </html>

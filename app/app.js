@@ -118,7 +118,7 @@ async function renderCalendar() {
   const words = entries.reduce((n, e) => n + (e.reflection?.trim() ? e.reflection.trim().split(/\s+/).length : 0), 0);
   $('month-summary').textContent = entries.length
     ? `${photos} photo${photos === 1 ? '' : 's'} · ${words} word${words === 1 ? '' : 's'} of reflection this month`
-    : 'Nothing here yet. Tap a day to start.';
+    : '';
 
   const grid = $('grid');
   grid.innerHTML = '';

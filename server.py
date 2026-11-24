@@ -129,6 +129,11 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY)
         if ON_RENDER:
             self.send_header("Strict-Transport-Security", "max-age=31536000")
+        # App files: let browsers keep a copy but check for a newer one on every load,
+        # so a deploy never leaves someone with old HTML mixed with new CSS/JS.
+        # (/api/ responses set their own no-store.)
+        if not self.path.startswith("/api/"):
+            self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
     def list_directory(self, path):

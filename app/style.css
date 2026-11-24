@@ -453,12 +453,14 @@ h2 { font-size: 30px; font-style: italic; }
 .mood-face { display: block; width: 100%; height: 100%; object-fit: contain; }
 .mood-options button {
   width: 48px; height: 48px; padding: 3px; background: transparent; border: none;
-  -webkit-backdrop-filter: none; backdrop-filter: none; filter: saturate(.7); opacity: .8;
+  -webkit-backdrop-filter: none; backdrop-filter: none; filter: none; opacity: 1;
+  transition: transform .15s, filter .2s, opacity .2s;
 }
 .mood-options button img { width: 100%; height: 100%; display: block; transform: scale(1.3); }
 .mood-options button:hover { filter: none; opacity: 1; }
-.mood-options:has(.active) button:not(.active) { opacity: .45; }
-.mood-options button.active { filter: none; opacity: 1; background: var(--accent-soft); border: none; box-shadow: 0 0 0 2px var(--accent); }
+.mood-options:has(.active) button:not(.active) { filter: grayscale(1); opacity: .4; }
+.mood-options button.active { filter: none; opacity: 1; background: transparent; border: none; box-shadow: none; transform: scale(1.12); }
+.mood-options:has(.active) button:not(.active):hover { filter: grayscale(.3); opacity: .8; }
 img.mood-badge { position: absolute; width: 36px; height: 36px; top: -15px; right: -15px; bottom: auto; left: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.2)); }
 .bar-emoji { width: 30px; height: 30px; }
 .bar-emoji img, .strip-day img, .mood-face.inline { transform: scale(1.3); }
@@ -469,3 +471,107 @@ img.mood-badge { position: absolute; width: 36px; height: 36px; top: -15px; righ
   .mood-options button { width: 42px; height: 42px; }
   img.mood-badge { width: 26px; height: 26px; top: -11px; right: -11px; }
 }
+
+/* =====================================================================
+   Liquid glass: frosted panels with a bright rim and soft inner glow
+   ===================================================================== */
+:root {
+  --glass-bg: linear-gradient(140deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .18) 60%, rgba(255, 255, 255, .3));
+  --glass-fill: rgba(255, 255, 255, .3);
+  --glass-rim: rgba(255, 255, 255, .75);
+  --glass-hi: rgba(255, 255, 255, .95);
+  --glass-glow: rgba(255, 255, 255, .35);
+  --glass-drop: 0 12px 32px rgba(60, 95, 92, .14), 0 2px 6px rgba(60, 95, 92, .08);
+  --glass-filter: blur(22px) saturate(1.6);
+}
+:root[data-mode="dark"] {
+  --glass-bg: linear-gradient(140deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04) 60%, rgba(255, 255, 255, .09));
+  --glass-fill: rgba(255, 255, 255, .07);
+  --glass-rim: rgba(255, 255, 255, .22);
+  --glass-hi: rgba(255, 255, 255, .4);
+  --glass-glow: rgba(255, 255, 255, .06);
+  --glass-drop: 0 12px 32px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2);
+}
+.photo-wrap, .recap-card, .recap-empty, .notebook, .weather,
+.text-btn:not(.primary), .icon-btn, .day-night, .recap-btn {
+  -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-rim);
+  box-shadow:
+    inset 0 1.5px 0 var(--glass-hi),          /* bright top edge */
+    inset 1.5px 0 0 var(--glass-glow),        /* soft left edge */
+    inset 0 -1px 0 var(--glass-glow),         /* faint bottom edge */
+    inset 0 0 28px var(--glass-glow),         /* glow from inside */
+    var(--glass-drop);
+}
+.photo-wrap, .recap-card, .recap-empty, .weather,
+.text-btn:not(.primary), .icon-btn, .day-night, .recap-btn { background: var(--glass-bg); }
+.photo-wrap, .recap-card, .recap-empty { border-radius: 28px; }
+.recap-empty { border-style: solid; }
+.text-btn:not(.primary):hover, .icon-btn:not(:disabled):hover { background: var(--glass-bg), var(--glass-fill); }
+.icon-btn:disabled { box-shadow: none; }
+.recap-btn { color: var(--ink); }
+
+/* reflection box keeps its ruled lines, on glass */
+.notebook { background-color: var(--glass-fill); border-radius: 24px; }
+textarea.notebook:focus { outline: none; border-color: var(--glass-hi); box-shadow: inset 0 1.5px 0 var(--glass-hi), inset 0 0 28px var(--glass-glow), 0 0 0 3px var(--accent-soft), var(--glass-drop); }
+
+/* the photo-free drop zone reads as a glass well */
+.photo-empty { border-radius: inherit; }
+/* Day/Night switch: the selected half is a solid pill inside the glass */
+.day-night button.active { box-shadow: 0 2px 8px rgba(0, 0, 0, .12), inset 0 1px 0 rgba(255, 255, 255, .35); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass-bg: rgba(253, 250, 240, .92); --glass-fill: rgba(253, 250, 240, .92); }
+  :root[data-mode="dark"] { --glass-bg: rgba(31, 42, 46, .94); --glass-fill: rgba(31, 42, 46, .94); }
+}
+.notebook::placeholder { color: var(--muted); opacity: 1; }
+:root[data-mode="dark"] .notebook { --rule: rgba(255, 255, 255, .1); }
+:root[data-mode="dark"] .photo-empty .plus { color: var(--accent-ink); }
+/* softer corners on the glass panels */
+.photo-wrap, .recap-card, .recap-empty, .collage { border-radius: 16px; }
+.notebook { border-radius: 14px; }
+
+/* ---------- calendar typeface: Chubby (Chu_bby, made with Calligraphr), served from /fonts ---------- */
+@font-face {
+  font-family: "Chubby";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/chubby-regular.otf") format("opentype");
+}
+.cal-head, .weekdays, .grid {
+  font-family: "Chubby", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.month-label, .m-year, .weekdays span, .cell .num,
+.cell.today:not(.has-photo) .num, .cell.has-photo .num { font-weight: 400; }
+
+/* ---------- calendar top bar: Day/Night · Today · Month recap · ‹ › ---------- */
+.nav { flex-wrap: wrap; justify-content: flex-end; }
+.arrows { display: inline-flex; gap: 4px; }
+.summary-row:has(.summary:empty) { display: none; }
+.recap-btn { font-weight: 500; }
+.cal-head { margin-bottom: 26px; }
+.summary-row { margin-top: -14px; }
+/* Chubby runs small for its size: nudge the numbers up */
+.cell .num { font-size: 23px; }
+.weekdays span { font-size: 19px; }
+@media (max-width: 480px) { .cell .num { font-size: 17px; } .weekdays span { font-size: 15px; } }
+
+/* =====================================================================
+   One typeface everywhere: Chubby
+   ===================================================================== */
+:root { --font: "Chubby", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+body, button, input, textarea, select,
+h1, h2, h3, .notebook, .recap-summary, .quote-text, .chip,
+.cal-head, .weekdays, .grid, .month-label {
+  font-family: var(--font);
+  font-style: normal;          /* Chubby has no italic; avoid a fake slant */
+  font-synthesis: none;        /* and no fake bold */
+}
+.footnote, .quote-text { font-style: normal; }
+h1 { font-size: 40px; }
+h2 { font-size: 30px; }
+/* Chubby is compact: lift the smallest labels so they stay readable */
+.eyebrow, .section-label, .reflection-label, .panel-label, .recap-card h3 { font-size: 13px; }
+.photo-empty .hint, .summary, .save-status, .quote-date, .bar-count { font-size: 15px; }
+.photo-empty .formats { font-size: 13px; }
