@@ -10,9 +10,11 @@
 <script>
   // Apply saved theme before first paint so there is no flash.
   try {
-    document.documentElement.dataset.mode = localStorage.getItem('df-mode') || 'system';
-    document.documentElement.dataset.accent = localStorage.getItem('df-accent') || 'lavender';
-  } catch (e) {}
+    var m = localStorage.getItem('df-mode');
+    if (m !== 'light' && m !== 'dark') m = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.mode = m;
+  } catch (e) { document.documentElement.dataset.mode = 'light'; }
+  document.documentElement.dataset.accent = 'mist';
 </script>
 </head>
 <body>
@@ -21,33 +23,11 @@
   <!-- CALENDAR VIEW -->
   <section id="calendar-view">
     <header class="top">
-      <div>
-        <p class="eyebrow">Daily Frame</p>
-        <h1 id="month-label">Month</h1>
-      </div>
+      <p class="eyebrow">Daily Frame</p>
       <div class="nav">
-        <div class="theme-wrap">
-          <button id="theme-btn" class="text-btn theme-btn" aria-haspopup="true" aria-expanded="false">
-            <span class="swatch-dot"></span>Theme
-          </button>
-          <div id="theme-panel" class="theme-panel" hidden>
-            <p class="panel-label">Mode</p>
-            <div class="segmented" id="mode-options">
-              <button data-mode="light">Light</button>
-              <button data-mode="dark">Dark</button>
-              <button data-mode="system">Auto</button>
-            </div>
-            <p class="panel-label">Accent</p>
-            <div class="swatches" id="accent-options">
-              <button data-accent="pink" title="Pink" style="--c:#FF499E"></button>
-              <button data-accent="orchid" title="Orchid" style="--c:#D264B6"></button>
-              <button data-accent="lavender" title="Lavender" style="--c:#A480CF"></button>
-              <button data-accent="blue" title="Cornflower" style="--c:#779BE7"></button>
-              <button data-accent="sky" title="Sky" style="--c:#49B6FF"></button>
-              <button data-accent="mix" title="All five" class="mix"></button>
-            </div>
-            <p id="accent-name" class="panel-hint"></p>
-          </div>
+        <div class="day-night" id="mode-options" role="group" aria-label="Theme">
+          <button data-mode="light" aria-pressed="false">&#9728;&#xFE0E; Day</button>
+          <button data-mode="dark" aria-pressed="false">&#9790; Night</button>
         </div>
         <button id="prev-month" class="icon-btn" aria-label="Previous month">&#8249;</button>
         <button id="today-btn" class="text-btn">Today</button>
@@ -55,13 +35,18 @@
       </div>
     </header>
 
+    <div class="cal-head">
+      <h1 id="month-label" class="month-label"><span class="m-num" id="month-num">01</span><span class="m-name" id="month-name">Month</span></h1>
+      <p class="m-year" aria-hidden="true"><span id="year-a">20</span><span id="year-b">26</span></p>
+    </div>
+
     <div class="summary-row">
       <p id="month-summary" class="summary"></p>
       <button id="recap-btn" class="text-btn small recap-btn">&#10024; Month recap</button>
     </div>
 
     <div class="weekdays">
-      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      <span title="Sunday">Su</span><span title="Monday">Mo</span><span title="Tuesday">Tu</span><span title="Wednesday">We</span><span title="Thursday">Th</span><span title="Friday">Fr</span><span title="Saturday">Sa</span>
     </div>
     <div id="grid" class="grid"></div>
 
@@ -89,11 +74,11 @@
     <div class="mood" role="group" aria-labelledby="mood-label">
       <span id="mood-label" class="section-label">Mood</span>
       <div id="mood-options" class="mood-options">
-        <button data-mood="1" aria-pressed="false" aria-label="Rough" title="Rough">&#128542;</button>
-        <button data-mood="2" aria-pressed="false" aria-label="Low" title="Low">&#128533;</button>
-        <button data-mood="3" aria-pressed="false" aria-label="Okay" title="Okay">&#128528;</button>
-        <button data-mood="4" aria-pressed="false" aria-label="Good" title="Good">&#128578;</button>
-        <button data-mood="5" aria-pressed="false" aria-label="Great" title="Great">&#128516;</button>
+        <button data-mood="1" aria-pressed="false" aria-label="Rough" title="Rough"><img src="img/mood-1.png" alt="" draggable="false"></button>
+        <button data-mood="2" aria-pressed="false" aria-label="Down" title="Down"><img src="img/mood-2.png" alt="" draggable="false"></button>
+        <button data-mood="3" aria-pressed="false" aria-label="Meh" title="Meh"><img src="img/mood-3.png" alt="" draggable="false"></button>
+        <button data-mood="4" aria-pressed="false" aria-label="Good" title="Good"><img src="img/mood-4.png" alt="" draggable="false"></button>
+        <button data-mood="5" aria-pressed="false" aria-label="Amazing" title="Amazing"><img src="img/mood-5.png" alt="" draggable="false"></button>
       </div>
       <span id="mood-name" class="mood-name"></span>
     </div>

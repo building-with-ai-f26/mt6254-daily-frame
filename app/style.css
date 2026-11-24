@@ -5,56 +5,73 @@
   --lavender: #A480CF;
   --blue: #779BE7;
   --sky: #49B6FF;
-  --accent: var(--lavender);
+  --mist: #4E8B84;
+  --honey: #C08A3E;
+  --accent: var(--mist);
 }
 [data-accent="pink"]     { --accent: var(--pink); }
 [data-accent="orchid"]   { --accent: var(--orchid); }
 [data-accent="lavender"] { --accent: var(--lavender); }
 [data-accent="blue"]     { --accent: var(--blue); }
 [data-accent="sky"]      { --accent: var(--sky); }
+[data-accent="mist"]     { --accent: var(--mist); }
+[data-accent="honey"]    { --accent: var(--honey); }
 [data-accent="mix"]      { --accent: var(--lavender); }
 
-/* ---------- light mode: creme ---------- */
+/* ---------- light mode: morning clouds (cream sky fading to mint) ---------- */
 :root {
-  --bg: #f8f2e7;
-  --card: #fffbf4;
-  --ink: #2b2622;
-  --muted: #7b7166;
-  --line: #e9dfcf;
-  --empty: #f0e7d8;
-  --photo-bg: #2b2622;
-  --danger: #b23b2b;
-  --accent-ink: var(--accent);
-  --accent-soft: color-mix(in oklab, var(--accent) 22%, var(--card));
+  --bg: #f6f2e4;
+  --card: rgba(255, 253, 246, .62);
+  --card-solid: #fdfaf0;
+  --ink: #34484a;
+  --muted: #6f8381;
+  --line: rgba(105, 140, 136, .26);
+  --empty: rgba(255, 255, 255, .46);
+  --photo-bg: #2e3b3c;
+  --danger: #b0473a;
+  --glass-blur: blur(14px) saturate(1.15);
+  --shadow: 0 8px 28px rgba(70, 110, 105, .12);
+  --sky-tint: linear-gradient(rgba(255, 252, 240, .08), rgba(255, 252, 240, .08));
+  --cell-border: rgba(52, 72, 74, .42);
+  --accent-ink: color-mix(in oklab, var(--accent) 80%, #1f2f30);
+  --accent-soft: color-mix(in oklab, var(--accent) 22%, var(--card-solid));
   color-scheme: light;
 }
 
-/* ---------- dark mode: dark grey ---------- */
+/* ---------- dark mode: the same sky at dusk ---------- */
 :root[data-mode="dark"] {
-  --bg: #1e1e21;
-  --card: #29292d;
-  --ink: #f2eff1;
-  --muted: #a39ea6;
-  --line: #3a3a40;
-  --empty: #2b2b30;
-  --photo-bg: #111113;
-  --danger: #ff8070;
-  --accent-ink: var(--accent);
-  --accent-soft: color-mix(in oklab, var(--accent) 28%, var(--card));
+  --bg: #182124;
+  --card: rgba(26, 36, 40, .62);
+  --card-solid: #1f2a2e;
+  --ink: #eef3ef;
+  --muted: #a3b4b1;
+  --line: rgba(255, 255, 255, .12);
+  --empty: rgba(255, 255, 255, .07);
+  --photo-bg: #0f1517;
+  --danger: #ff8a78;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .3);
+  --sky-tint: linear-gradient(rgba(22, 30, 48, .62), rgba(16, 36, 40, .7));
+  --cell-border: rgba(255, 255, 255, .5);
+  --accent-ink: color-mix(in oklab, var(--accent) 70%, #ffffff);
+  --accent-soft: color-mix(in oklab, var(--accent) 30%, var(--card-solid));
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-mode="system"] {
-    --bg: #1e1e21;
-    --card: #29292d;
-    --ink: #f2eff1;
-    --muted: #a39ea6;
-    --line: #3a3a40;
-    --empty: #2b2b30;
-    --photo-bg: #111113;
-    --danger: #ff8070;
-    --accent-ink: var(--accent);
-    --accent-soft: color-mix(in oklab, var(--accent) 28%, var(--card));
+    --bg: #182124;
+    --card: rgba(26, 36, 40, .62);
+    --card-solid: #1f2a2e;
+    --ink: #eef3ef;
+    --muted: #a3b4b1;
+    --line: rgba(255, 255, 255, .12);
+    --empty: rgba(255, 255, 255, .07);
+    --photo-bg: #0f1517;
+    --danger: #ff8a78;
+    --shadow: 0 8px 28px rgba(0, 0, 0, .3);
+    --sky-tint: linear-gradient(rgba(22, 30, 48, .62), rgba(16, 36, 40, .7));
+    --cell-border: rgba(255, 255, 255, .5);
+    --accent-ink: color-mix(in oklab, var(--accent) 70%, #ffffff);
+    --accent-soft: color-mix(in oklab, var(--accent) 30%, var(--card-solid));
     color-scheme: dark;
   }
 }
@@ -318,4 +335,137 @@ textarea.notebook:focus { outline: 3px solid var(--accent-soft); border-color: v
   .collage { gap: 4px; border-radius: 12px; }
   .mood-options button { width: 40px; height: 40px; font-size: 20px; }
   .cell .mood-badge { font-size: 11px; bottom: 2px; left: 3px; }
+}
+
+/* =====================================================================
+   Cloud theme: soft watercolor sky behind frosted-glass surfaces
+   ===================================================================== */
+html { background: var(--bg); }
+body { background: transparent; min-height: 100vh; }
+/* fixed sky layer (a pseudo-element instead of background-attachment: fixed, which iOS ignores) */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--sky-tint), url("img/clouds.jpg") center / cover no-repeat, var(--bg);
+  transition: background .3s;
+}
+
+h1, h2, .recap-summary, .quote-text, .notebook {
+  font-family: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
+h1 { font-size: 44px; font-style: italic; letter-spacing: -.01em; line-height: 1.1; }
+h2 { font-size: 30px; font-style: italic; }
+.eyebrow { letter-spacing: .28em; font-weight: 600; font-size: 11px; }
+.notebook { font-size: 18px; }
+
+/* frosted glass surfaces */
+.icon-btn, .text-btn, .cell:not(.blank), .photo-wrap, .notebook, .recap-card, .recap-empty,
+.mood-options button, .weather, .strip-day, .chip {
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+}
+.icon-btn, .text-btn { background: var(--card); border-color: var(--line); }
+.text-btn:hover, .icon-btn:not(:disabled):hover { background: var(--card-solid); }
+.text-btn.primary { background: var(--accent); border-color: var(--accent); }
+.photo-wrap, .recap-card, .recap-empty { border-radius: 22px; box-shadow: var(--shadow); }
+.recap-card { padding: 22px 24px; }
+.notebook { border-radius: 18px; box-shadow: var(--shadow); }
+.theme-panel { background: var(--card-solid); border-radius: 18px; }
+.segmented { background: var(--empty); }
+
+.mood-options button { background: var(--card); }
+.recap-btn { background: var(--accent-soft); }
+.collage { border-radius: 22px; box-shadow: var(--shadow); }
+.footnote { font-style: italic; }
+
+
+/* =====================================================================
+   Minimal outline calendar: thin rounded squares, light numerals
+   ===================================================================== */
+#calendar-view { max-width: 600px; margin: 0 auto; }
+#calendar-view .top { align-items: center; margin-bottom: 28px; }
+.cal-head, .weekdays, .grid {
+  font-family: "Helvetica Neue", "Avenir Next", Helvetica, Arial, sans-serif;
+}
+.cal-head { display: flex; justify-content: space-between; align-items: flex-end; margin: 8px 0 10px; color: var(--ink); }
+.month-label {
+  font-family: inherit; font-style: normal; font-weight: 300; margin: 0;
+  display: flex; flex-direction: column; line-height: 1; letter-spacing: 0;
+}
+.m-num { font-size: 40px; }
+.m-name { font-size: 46px; margin-top: 2px; }
+.m-year {
+  margin: 0 0 4px; display: flex; flex-direction: column; align-items: flex-end;
+  font-size: 22px; font-weight: 300; line-height: 1.05;
+}
+.summary-row { margin: 6px 0 30px; }
+
+.weekdays, .grid { gap: clamp(8px, 3.4vw, 22px); }
+.weekdays { margin-bottom: 14px; }
+.weekdays span {
+  font-size: 17px; font-weight: 300; text-transform: none; letter-spacing: 0; color: var(--ink); padding: 0;
+}
+.grid { row-gap: clamp(10px, 3.6vw, 26px); }
+
+.cell {
+  border-radius: 30%; background: transparent; border: 1px solid var(--cell-border);
+  color: var(--ink); -webkit-backdrop-filter: none; backdrop-filter: none;
+  transition: background-color .2s, border-color .2s;
+}
+.cell.blank { border: none; }
+.cell .num {
+  inset: 0; top: 0; left: 0; display: grid; place-items: center;
+  font-size: 20px; font-weight: 300;
+}
+.cell:not(.blank):not(.future):hover { filter: none; background: var(--empty); border-color: var(--ink); }
+.cell.future { opacity: .4; }
+.cell.today { outline: none; border: 1.5px solid var(--accent-ink); background: var(--accent-soft); }
+.cell.today:not(.has-photo) .num { color: var(--ink); font-weight: 400; }
+.cell.has-photo { border: none; box-shadow: none; }
+.cell.has-photo .num { color: #fff; font-weight: 400; text-shadow: 0 1px 4px rgba(0,0,0,.55); }
+.cell.today.has-photo { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+.cell .dot { bottom: 14%; right: auto; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; box-shadow: none; }
+.cell.has-photo .dot { background: #fff; }
+.cell .mood-badge { bottom: auto; top: -7px; left: auto; right: -7px; font-size: 15px; }
+.grid { padding-top: 6px; }
+
+@media (max-width: 480px) {
+  .m-num { font-size: 30px; }
+  .m-name { font-size: 34px; }
+  .m-year { font-size: 17px; }
+  .weekdays span { font-size: 14px; }
+  .cell .num { font-size: 15px; top: 0; left: 0; }
+  .cell .mood-badge { font-size: 12px; top: -6px; right: -5px; }
+}
+.cell { overflow: visible; }
+.cell img { border-radius: inherit; }
+
+/* ---------- Day / Night switch ---------- */
+.day-night {
+  display: inline-flex; padding: 3px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+}
+.day-night button {
+  border: none; background: none; color: var(--muted); cursor: pointer;
+  padding: 4px 12px; border-radius: 999px; font-size: 14px; transition: background-color .2s, color .2s;
+}
+.day-night button.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+/* ---------- hand-drawn mood faces ---------- */
+.mood-face { display: block; width: 100%; height: 100%; object-fit: contain; }
+.mood-options button {
+  width: 48px; height: 48px; padding: 3px; background: transparent; border: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none; filter: saturate(.7); opacity: .8;
+}
+.mood-options button img { width: 100%; height: 100%; display: block; transform: scale(1.3); }
+.mood-options button:hover { filter: none; opacity: 1; }
+.mood-options:has(.active) button:not(.active) { opacity: .45; }
+.mood-options button.active { filter: none; opacity: 1; background: var(--accent-soft); border: none; box-shadow: 0 0 0 2px var(--accent); }
+img.mood-badge { position: absolute; width: 36px; height: 36px; top: -15px; right: -15px; bottom: auto; left: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.2)); }
+.bar-emoji { width: 30px; height: 30px; }
+.bar-emoji img, .strip-day img, .mood-face.inline { transform: scale(1.3); }
+.strip-day { padding: 2px; }
+.strip-day img { width: 100%; height: 100%; display: block; }
+.mood-face.inline { display: inline-block; width: 18px; height: 18px; vertical-align: -4px; margin-left: 6px; }
+@media (max-width: 480px) {
+  .mood-options button { width: 42px; height: 42px; }
+  img.mood-badge { width: 26px; height: 26px; top: -11px; right: -11px; }
 }

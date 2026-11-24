@@ -106,7 +106,11 @@ async function renderCalendar() {
   revokeUrls();
   const first = new Date(viewYear, viewMonth, 1);
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  $('month-label').textContent = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  $('month-label').setAttribute('aria-label', first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
+  $('month-num').textContent = String(viewMonth + 1).padStart(2, '0');
+  $('month-name').textContent = first.toLocaleDateString(undefined, { month: 'long' });
+  const yr = String(viewYear);
+  $('year-a').textContent = yr.slice(0, 2); $('year-b').textContent = yr.slice(2);
 
   const entries = await getMonth(viewYear, viewMonth);
   const byDate = Object.fromEntries(entries.map((e) => [e.date, e]));
@@ -138,7 +142,7 @@ async function renderCalendar() {
     const num = document.createElement('span'); num.className = 'num'; num.textContent = d; cell.appendChild(num);
     if (e?.reflection?.trim()) { const dot = document.createElement('span'); dot.className = 'dot'; cell.appendChild(dot); }
     if (e?.mood) {
-      const m = document.createElement('span'); m.className = 'mood-badge'; m.textContent = MOODS[e.mood].emoji;
+      const m = moodImg(e.mood, 'mood-badge');
       cell.appendChild(m);
       cell.setAttribute('aria-label', `${fromKey(k).toDateString()}, mood: ${MOODS[e.mood].name}`);
     }
@@ -360,10 +364,14 @@ async function backToCalendar() {
   renderCalendar();
 }
 
-// ---------- mood: one of five emojis per day, saved as entry.mood (1 = rough ... 5 = great) ----------
+// ---------- mood: one of five hand-drawn faces per day, saved as entry.mood (1 = rough ... 5 = amazing) ----------
 const MOODS = [null,
-  { emoji: '😞', name: 'Rough' }, { emoji: '😕', name: 'Low' }, { emoji: '😐', name: 'Okay' },
-  { emoji: '🙂', name: 'Good' }, { emoji: '😄', name: 'Great' }];
+  { name: 'Rough' }, { name: 'Down' }, { name: 'Meh' }, { name: 'Good' }, { name: 'Amazing' }];
+// Hand-drawn face for a mood (1-5), as an <img>. Decorative: the mood name is given in text or a label nearby.
+function moodImg(m, cls = 'mood-face') {
+  const i = document.createElement('img'); i.src = `img/mood-${m}.png`; i.alt = ''; i.className = cls; i.draggable = false;
+  return i;
+}
 
 function showMood(m) {
   document.querySelectorAll('#mood-options button').forEach((b) => {
@@ -484,11 +492,11 @@ function summaryText(entries, a, daysSoFar, isThisMonth) {
   if (a.moods.length) {
     const top = [1, 2, 3, 4, 5].sort((x, y) => a.counts[y] - a.counts[x] || y - x)[0];
     const trend = { up: ' and your mood lifted as the month went on', down: ' and the second half felt heavier than the first', steady: ' and your mood stayed fairly steady' }[a.trend] || '';
-    out.push(`Most days felt ${MOODS[top].name.toLowerCase()} ${MOODS[top].emoji}${trend}.`);
+    out.push(`Most days felt ${MOODS[top].name.toLowerCase()}${trend}.`);
     const best = a.moods.reduce((b, e) => (e.mood > b.mood ? e : b));
     const worst = a.moods.reduce((b, e) => (e.mood < b.mood ? e : b));
-    if (best.mood >= 4) out.push(`Your brightest day was ${shortDate(best.date)} ${MOODS[best.mood].emoji}.`);
-    if (worst.mood <= 2 && worst !== best) out.push(`${shortDate(worst.date)} was the hardest ${MOODS[worst.mood].emoji}, and you wrote it down anyway.`);
+    if (best.mood >= 4) out.push(`Your brightest day was ${shortDate(best.date)}.`);
+    if (worst.mood <= 2 && worst !== best) out.push(`${shortDate(worst.date)} was the hardest, and you wrote it down anyway.`);
   }
   const recurring = a.themes.filter((t) => t.days >= 2).slice(0, 3).map((t) => t.word);
   if (recurring.length) out.push(`Your writing kept coming back to ${listJoin(recurring)}.`);
@@ -627,7 +635,8 @@ async function openRecap(y, m) {
     const fill = el('span', 'fill');
     fill.style.width = `${(a.counts[v] / maxCount) * 100}%`;
     const track_ = el('span', 'bar-track'); track_.appendChild(fill);
-    row.append(el('span', 'bar-emoji', MOODS[v].emoji), track_, el('span', 'bar-count', String(a.counts[v])));
+    const face = el('span', 'bar-emoji'); face.append(moodImg(v));
+    row.append(face, track_, el('span', 'bar-count', String(a.counts[v])));
     row.setAttribute('aria-label', `${MOODS[v].name}: ${a.counts[v]} day${a.counts[v] === 1 ? '' : 's'}`);
     bars.appendChild(row);
   }
@@ -637,7 +646,7 @@ async function openRecap(y, m) {
   for (let d = 1; d <= daysSoFar; d++) {
     const k = key(new Date(y, m, d));
     const mood = byDate[k]?.mood;
-    const b = el('button', 'strip-day' + (mood ? '' : ' none'), mood ? MOODS[mood].emoji : '');
+    const b = el('button', 'strip-day' + (mood ? '' : ' none')); if (mood) b.append(moodImg(mood));
     b.title = `${shortDate(k)}${mood ? ': ' + MOODS[mood].name : ''}`;
     b.setAttribute('aria-label', b.title);
     b.onclick = () => openDay(k);
@@ -649,7 +658,7 @@ async function openRecap(y, m) {
   quotes.innerHTML = '';
   a.quotes.forEach((q) => {
     const fig = el('button', 'quote');
-    fig.append(el('span', 'quote-text', `“${q.text}”`), el('span', 'quote-date', `${shortDate(q.date)}${q.mood ? ' ' + MOODS[q.mood].emoji : ''}`));
+    fig.append(el('span', 'quote-text', `“${q.text}”`), (() => { const d = el('span', 'quote-date', shortDate(q.date)); if (q.mood) d.append(moodImg(q.mood, 'mood-face inline')); return d; })());
     fig.onclick = () => openDay(q.date);
     quotes.appendChild(fig);
   });
@@ -671,36 +680,21 @@ function backFromRecap() {
 
 // ---------- theme ----------
 const MIX = ['var(--pink)', 'var(--orchid)', 'var(--lavender)', 'var(--blue)', 'var(--sky)'];
-const ACCENT_NAMES = { pink: 'Pink', orchid: 'Orchid', lavender: 'Lavender', blue: 'Cornflower', sky: 'Sky', mix: 'All five (each day gets its own color)' };
 const root = document.documentElement;
 
 function store(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
 
+// Two themes only: Day (light) and Night (dark).
 function applyTheme() {
-  document.querySelectorAll('#mode-options button').forEach((b) => b.classList.toggle('active', b.dataset.mode === root.dataset.mode));
-  document.querySelectorAll('#accent-options button').forEach((b) => b.classList.toggle('active', b.dataset.accent === root.dataset.accent));
-  $('accent-name').textContent = ACCENT_NAMES[root.dataset.accent] || '';
+  document.querySelectorAll('#mode-options button').forEach((b) => {
+    const on = b.dataset.mode === root.dataset.mode;
+    b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
+  });
 }
 $('mode-options').onclick = (e) => {
-  const m = e.target.dataset.mode; if (!m) return;
+  const m = e.target.closest('button')?.dataset.mode; if (!m) return;
   root.dataset.mode = m; store('df-mode', m); applyTheme();
 };
-$('accent-options').onclick = (e) => {
-  const a = e.target.dataset.accent; if (!a) return;
-  root.dataset.accent = a; store('df-accent', a); applyTheme();
-};
-$('theme-btn').onclick = (e) => {
-  e.stopPropagation();
-  const open = $('theme-panel').hidden;
-  $('theme-panel').hidden = !open;
-  $('theme-btn').setAttribute('aria-expanded', String(open));
-};
-document.addEventListener('click', (e) => {
-  if (!$('theme-panel').hidden && !e.target.closest('.theme-wrap')) {
-    $('theme-panel').hidden = true; $('theme-btn').setAttribute('aria-expanded', 'false');
-  }
-});
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('theme-panel').hidden = true; });
 applyTheme();
 
 // ---------- drag and drop a photo onto the day view ----------

@@ -22,10 +22,10 @@ Use `server.py`, not `python3 -m http.server`: the plain file server cannot call
 | Path | What it is |
 | --- | --- |
 | `server.py` | Local server. Serves `app/`, answers `GET /api/weather` by calling OpenWeatherMap with the key from `.env`, and serves `GET /config.js` with the public PostHog settings. Logs each weather call with timing and cost. |
-| `app/index.html` | The single page: calendar view, day view (with the 5-emoji mood picker) and monthly recap view. |
+| `app/index.html` | The single page: calendar view, day view (with the 5-face mood picker; faces live in `app/img/mood-1..5.png`) and monthly recap view. |
 | `app/app.js` | All app logic: IndexedDB storage, calendar, day view, photo resize and HEIC handling, reflection lock/edit, mood (`showMood`, `onMoodClick`), weather snapshot (`captureWeather`, `showWeather`), monthly recap (`openRecap`, `analyzeMonth`, `summaryText`) and animated collage (`buildCollage`), theme, analytics events. |
 | `app/analytics.js` | PostHog setup for the app, plus `track(event, props)` used by `app.js`. Does nothing if no key is set. |
-| `app/style.css` | Styles, light/dark modes, accent colors. |
+| `app/style.css` | Styles: cloud background, Day/Night themes (Mist accent). |
 | `app/vendor/heic-to.js` | Vendored HEIC converter (loaded only for iPhone photos). |
 | `docs/index.html` | Public Product Page (GitHub Pages): pitch, living PRD, build log. Has its own PostHog snippet. |
 | `.env.example` | Template for `.env`. Real `.env` is git-ignored. |
@@ -34,7 +34,7 @@ Use `server.py`, not `python3 -m http.server`: the plain file server cannot call
 
 **Data flow for one post:** photo or reflection saved in IndexedDB → first save of today calls `/api/weather?lat&lon` (rounded to 2 decimals; falls back to `WEATHER_CITY`) → `server.py` calls `api.openweathermap.org/data/2.5/weather` → trimmed result `{tempC, feelsLikeC, description, icon, city, country, capturedAt}` saved as `entry.weather` → shown under the date. Only today gets a snapshot (the free plan has no history).
 
-**Mood:** each day can store `entry.mood` (1 = rough … 5 = great). Tapping the selected emoji again clears it. A mood by itself is enough to keep a day's entry.
+**Mood:** each day can store `entry.mood` (1 = rough … 5 = amazing). Tapping the selected face again clears it. A mood by itself is enough to keep a day's entry.
 
 **Monthly recap:** built entirely in the browser from that month's IndexedDB entries. No AI and no network calls. The summary uses recurring words (counted by how many days they appear), one standout sentence per day, and mood counts and trend. The collage shows up to 9 photos in a 4-column mosaic that slowly drifts and swaps photos every ~3 s, and it starts paused when the device asks for reduced motion. URL: `#recap-YYYY-MM`.
 
